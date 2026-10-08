@@ -3,7 +3,7 @@
 Application premium de réservation de chambres par créneaux (3h, nuitée, journée, 2 jours, 3 jours) avec forfaits, pour Lomé (Togo). Fonction clé : guider le client jusqu'à l'établissement sans qu'il ait besoin d'appeler.
 
 ## Structure
-- `/harmony-api` : Laravel 13 (PHP ≥ 8.3), MySQL, Sanctum, Reverb, queues + scheduler, admin Filament. Laravel 11 est en fin de vie et bloqué par Composer pour failles connues : ne pas y revenir.
+- `/harmony-api` : Laravel 13 (PHP 8.4, fixé via `config.platform` de Composer), MySQL, Sanctum, Reverb, queues + scheduler, admin Filament. Laravel 11 est en fin de vie et bloqué par Composer pour failles connues : ne pas y revenir.
 - Hébergement de l'API : Render (conteneur Docker).
 - Dépôt : https://github.com/ADIBOLOGottlieb/Harmony (monorepo, branche `main`, CI GitHub Actions dans `.github/workflows/ci.yml`).
 - `/harmony-app` : Flutter 3 / Dart 3.
