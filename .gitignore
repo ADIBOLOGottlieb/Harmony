@@ -1,0 +1,13 @@
+# Secrets — jamais commités (voir CLAUDE.md)
+.env
+.env.*
+!.env.example
+
+# Réglages locaux de Claude Code et des éditeurs
+.claude/settings.local.json
+.vscode/
+.idea/
+
+# Système
+Thumbs.db
+.DS_Store

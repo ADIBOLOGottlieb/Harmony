@@ -1,0 +1,45 @@
+name: harmony_app
+description: "HARMONY — réservation de chambres par créneaux, Lomé."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_animate: ^4.5.2
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^3.4.3
+  go_router: ^18.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Polices embarquées (licence OFL) : disponibles hors-ligne, sans appel réseau.
+  fonts:
+    - family: PlayfairDisplay
+      fonts:
+        - asset: assets/fonts/PlayfairDisplay-400.ttf
+        - asset: assets/fonts/PlayfairDisplay-400italic.ttf
+          style: italic
+        - asset: assets/fonts/PlayfairDisplay-600.ttf
+          weight: 600
+        - asset: assets/fonts/PlayfairDisplay-700.ttf
+          weight: 700
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-400.ttf
+        - asset: assets/fonts/Manrope-500.ttf
+          weight: 500
+        - asset: assets/fonts/Manrope-600.ttf
+          weight: 600
+        - asset: assets/fonts/Manrope-700.ttf
+          weight: 700
