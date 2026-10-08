@@ -14,7 +14,7 @@ Les deux hébergeurs sont dans la même région, la plus proche de Lomé, pour l
 
 1. Créer un projet nommé `harmony`, région **Central EU (Frankfurt)**.
 2. Générer un **mot de passe de base** fort et le ranger dans un gestionnaire de mots de passe. Il ne doit jamais être envoyé en clair dans une messagerie ni commité.
-3. **Désactiver la Data API** : *Project Settings → Data API*, puis désactiver l'option. HARMONY passe uniquement par son API Laravel. Laissée active, la Data API pourrait exposer les tables publiquement avec la clé `anon`.
+3. **Désactiver la Data API** : décocher *Enable Data API* dans les options avancées à la création du projet ; sur un projet existant, aller dans *Integrations → Data API* (ou *Project Settings → API* selon la version du tableau de bord) et désactiver l'option. HARMONY passe uniquement par son API Laravel. Laissée active, la Data API pourrait exposer les tables publiquement avec la clé `anon`.
 4. **Activer l'extension `btree_gist`** : *Database → Extensions*, rechercher `btree_gist`, puis l'activer. Elle permet à la base d'interdire les réservations qui se chevauchent.
 5. Récupérer les paramètres de connexion : bouton **Connect**, onglet **Session pooler**. Noter :
    - **Host**, de la forme `aws-0-eu-central-1.pooler.supabase.com` ;
