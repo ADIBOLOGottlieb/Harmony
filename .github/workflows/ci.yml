@@ -16,12 +16,34 @@ jobs:
     defaults:
       run:
         working-directory: harmony-api
+    # Même moteur qu'en production (Render) : les tests de chevauchement et de
+    # concurrence s'appuieront sur les contraintes d'exclusion PostgreSQL.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: harmony_test
+          POSTGRES_USER: harmony
+          POSTGRES_PASSWORD: harmony
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U harmony"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: harmony_test
+      DB_USERNAME: harmony
+      DB_PASSWORD: harmony
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, pdo_sqlite, bcmath, intl
+          extensions: mbstring, pdo_pgsql, pdo_sqlite, bcmath, intl
           coverage: none
       - name: Dépendances
         run: composer install --no-interaction --prefer-dist --no-progress
@@ -29,8 +51,18 @@ jobs:
         run: cp .env.example .env && php artisan key:generate
       - name: Style (Pint)
         run: ./vendor/bin/pint --test
+      - name: Migrations (PostgreSQL)
+        run: php artisan migrate --force
       - name: Tests (Pest)
         run: ./vendor/bin/pest
+
+  docker:
+    name: Image Docker de l'API (Render)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construction de l'image
+        run: docker build -t harmony-api:ci harmony-api
 
   app:
     name: App Flutter (analyze + tests)

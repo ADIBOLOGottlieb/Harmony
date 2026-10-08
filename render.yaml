@@ -1,0 +1,59 @@
+# Blueprint Render : API Laravel (Docker) + PostgreSQL.
+# Mode d'emploi pour l'administrateur : docs/deploiement-render.md
+# Aucun secret ici : APP_KEY est saisie dans le tableau de bord Render,
+# les identifiants de la base sont injectés par Render.
+
+databases:
+  - name: harmony-db
+    databaseName: harmony
+    user: harmony
+    plan: free # à passer en plan payant avant la production (la base gratuite expire après 30 jours)
+    region: frankfurt # région Render la plus proche de Lomé
+    postgresMajorVersion: "17"
+    ipAllowList: [] # accessible uniquement depuis les services Render
+
+services:
+  - type: web
+    name: harmony-api
+    runtime: docker
+    region: frankfurt
+    plan: free # mise en veille après inactivité : plan payant conseillé en production
+    dockerfilePath: ./harmony-api/Dockerfile
+    dockerContext: ./harmony-api
+    healthCheckPath: /up
+    buildFilter:
+      paths:
+        - harmony-api/**
+    envVars:
+      - key: APP_KEY
+        sync: false # à saisir : sortie de `php artisan key:generate --show`
+      - key: APP_URL
+        sync: false # à saisir : l'URL publique du service (https://…onrender.com)
+      - key: APP_NAME
+        value: HARMONY
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_TIMEZONE
+        value: Africa/Lome
+      - key: APP_LOCALE
+        value: fr
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: harmony-db
+          property: connectionString
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: PORT
+        value: "8080"

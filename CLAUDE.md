@@ -3,8 +3,8 @@
 Application premium de réservation de chambres par créneaux (3h, nuitée, journée, 2 jours, 3 jours) avec forfaits, pour Lomé (Togo). Fonction clé : guider le client jusqu'à l'établissement sans qu'il ait besoin d'appeler.
 
 ## Structure
-- `/harmony-api` : Laravel 13 (PHP 8.4, fixé via `config.platform` de Composer), MySQL, Sanctum, Reverb, queues + scheduler, admin Filament. Laravel 11 est en fin de vie et bloqué par Composer pour failles connues : ne pas y revenir.
-- Hébergement de l'API : Render (conteneur Docker).
+- `/harmony-api` : Laravel 13 (PHP 8.4, fixé via `config.platform` de Composer), PostgreSQL 17, Sanctum, Reverb, queues + scheduler, admin Filament. Laravel 11 est en fin de vie et bloqué par Composer pour failles connues : ne pas y revenir.
+- Hébergement de l'API : Render, région Frankfurt (conteneur Docker `harmony-api/Dockerfile` + PostgreSQL géré, blueprint `render.yaml`). **La configuration Render (compte, services, secrets) est faite par l'administrateur** : on prépare le dépôt et `docs/deploiement-render.md`, on ne touche pas au tableau de bord Render.
 - Dépôt : https://github.com/ADIBOLOGottlieb/Harmony (monorepo, branche `main`, CI GitHub Actions dans `.github/workflows/ci.yml`).
 - `/harmony-app` : Flutter 3 / Dart 3.
 - Interface en français. Devise FCFA en entiers (jamais de décimales ni de float). Fuseau `Africa/Lome` (UTC+0) ; stocker en UTC, afficher en heure locale.
@@ -37,9 +37,11 @@ Application premium de réservation de chambres par créneaux (3h, nuitée, jour
 - **Anti double-réservation** :
   - tout passe par `BookingService` : création, prolongation, late check-out Prestige ;
   - transaction + `lockForUpdate` sur la chambre ;
-  - chevauchement testé sur `[start_at, end_at + tampon)` pour les statuts actifs ;
-  - MySQL n'ayant pas de contrainte d'exclusion, le verrou est la garantie et un index `(room_id, start_at, blocked_until)` sert la requête ;
+  - chevauchement testé sur `[start_at, blocked_until)`, où `blocked_until = end_at + tampon`, pour les statuts actifs (`pending`, `confirmed`, `en_route`, `checked_in`) ;
+  - **double sécurité en base** : extension `btree_gist` + contrainte `EXCLUDE USING gist (room_id WITH =, tstzrange(start_at, blocked_until, '[)') WITH &&) WHERE (statut actif)`. Une violation (SQLSTATE `23P01`) est traduite en erreur métier « créneau indisponible » (HTTP 409) ;
+  - colonnes horaires en `timestamptz` ;
   - tests de concurrence obligatoires.
+- **Tests et base de données** : la CI exécute Pest sur un vrai PostgreSQL 17. En local, sans PostgreSQL, les tests tournent sur SQLite ; les tests qui dépendent de PostgreSQL (contrainte d'exclusion, concurrence) sont ignorés hors PostgreSQL et doivent passer en CI avant tout merge.
 - **Prix** : calculé par `PricingService` côté serveur. Le total et l'acompte sont figés sur la réservation au moment de sa création ; un changement de règle ne modifie pas une réservation existante.
 - **Paiement** : FedaPay (TMoney/Flooz), acompte de 30 %. Webhook signé et idempotent (identifiant d'événement unique). Les réservations impayées expirent après 30 min (scheduler).
 - **Notifications** : FCM et WhatsApp Cloud API (modèles de messages approuvés), envoyées via les queues.
