@@ -1,26 +1,16 @@
-# Blueprint Render : API Laravel (Docker) + PostgreSQL.
-# Mode d'emploi pour l'administrateur : docs/deploiement-render.md
-# Aucun secret ici : APP_KEY est saisie dans le tableau de bord Render,
-# les identifiants de la base sont injectés par Render.
-
-databases:
-  - name: harmony-db
-    databaseName: harmony
-    user: harmony
-    plan: free # à passer en plan payant avant la production (la base gratuite expire après 30 jours)
-    region: frankfurt # région Render la plus proche de Lomé
-    postgresMajorVersion: "17"
-    ipAllowList: [] # accessible uniquement depuis les services Render
+# Blueprint Render : API Laravel (Docker), base PostgreSQL hébergée chez Supabase.
+# Mode d'emploi : docs/deploiement-render.md
+# Aucun secret ici : les valeurs marquées `sync: false` sont saisies dans Render.
 
 services:
   - type: web
     name: harmony-api
     runtime: docker
-    region: frankfurt
+    region: frankfurt # même région que le projet Supabase (eu-central-1), la plus proche de Lomé
     plan: free # mise en veille après inactivité : plan payant conseillé en production
     dockerfilePath: ./harmony-api/Dockerfile
     dockerContext: ./harmony-api
-    healthCheckPath: /up
+    healthCheckPath: /up # ne dépend pas de la base : un réveil lent de Supabase ne bloque pas le déploiement
     buildFilter:
       paths:
         - harmony-api/**
@@ -43,12 +33,24 @@ services:
         value: stderr
       - key: LOG_LEVEL
         value: info
+
+      # Base Supabase via le pooler de sessions (IPv4, compatible avec Render gratuit).
+      # Valeurs à copier depuis Supabase : Connect → Session pooler.
       - key: DB_CONNECTION
         value: pgsql
-      - key: DB_URL
-        fromDatabase:
-          name: harmony-db
-          property: connectionString
+      - key: DB_HOST
+        sync: false # ex. aws-0-eu-central-1.pooler.supabase.com
+      - key: DB_PORT
+        value: "5432" # port du mode session (le port 6543 du mode transaction casse les requêtes préparées)
+      - key: DB_DATABASE
+        value: postgres
+      - key: DB_USERNAME
+        sync: false # ex. postgres.<référence-du-projet>
+      - key: DB_PASSWORD
+        sync: false # mot de passe de la base Supabase
+      - key: DB_SSLMODE
+        value: require
+
       - key: SESSION_DRIVER
         value: database
       - key: CACHE_STORE

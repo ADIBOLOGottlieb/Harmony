@@ -4,7 +4,11 @@ Application premium de réservation de chambres par créneaux (3h, nuitée, jour
 
 ## Structure
 - `/harmony-api` : Laravel 13 (PHP 8.4, fixé via `config.platform` de Composer), PostgreSQL 17, Sanctum, Reverb, queues + scheduler, admin Filament. Laravel 11 est en fin de vie et bloqué par Composer pour failles connues : ne pas y revenir.
-- Hébergement de l'API : Render, région Frankfurt (conteneur Docker `harmony-api/Dockerfile` + PostgreSQL géré, blueprint `render.yaml`). **La configuration Render (compte, services, secrets) est faite par l'administrateur** : on prépare le dépôt et `docs/deploiement-render.md`, on ne touche pas au tableau de bord Render.
+- Hébergement (plans gratuits pour l'instant) :
+  - **Base : Supabase**, région Central EU (Frankfurt), via le **Session pooler** (IPv4, port 5432 ; jamais le port 6543 du mode transaction, incompatible avec les requêtes préparées de PDO). Data API Supabase désactivée : tout passe par l'API Laravel.
+  - **API : Render**, région Frankfurt, conteneur `harmony-api/Dockerfile`, blueprint `render.yaml`. Identifiants de la base saisis en secrets dans Render.
+  - **Keepalive** : `.github/workflows/keepalive.yml` appelle `/api/v1/health` (qui interroge la base) chaque jour, pour éviter la pause Supabase après 7 jours. À retirer lors du passage aux plans payants.
+  - **La configuration de Supabase, Render et des variables GitHub est faite par l'administrateur** : on prépare le dépôt et `docs/deploiement-render.md`, on ne touche pas aux tableaux de bord.
 - Dépôt : https://github.com/ADIBOLOGottlieb/Harmony (monorepo, branche `main`, CI GitHub Actions dans `.github/workflows/ci.yml`).
 - `/harmony-app` : Flutter 3 / Dart 3.
 - Interface en français. Devise FCFA en entiers (jamais de décimales ni de float). Fuseau `Africa/Lome` (UTC+0) ; stocker en UTC, afficher en heure locale.
@@ -38,7 +42,7 @@ Application premium de réservation de chambres par créneaux (3h, nuitée, jour
   - tout passe par `BookingService` : création, prolongation, late check-out Prestige ;
   - transaction + `lockForUpdate` sur la chambre ;
   - chevauchement testé sur `[start_at, blocked_until)`, où `blocked_until = end_at + tampon`, pour les statuts actifs (`pending`, `confirmed`, `en_route`, `checked_in`) ;
-  - **double sécurité en base** : extension `btree_gist` + contrainte `EXCLUDE USING gist (room_id WITH =, tstzrange(start_at, blocked_until, '[)') WITH &&) WHERE (statut actif)`. Une violation (SQLSTATE `23P01`) est traduite en erreur métier « créneau indisponible » (HTTP 409) ;
+  - **double sécurité en base** : extension `btree_gist` + contrainte `EXCLUDE USING gist (room_id WITH =, tstzrange(start_at, blocked_until, '[)') WITH &&) WHERE (statut actif)`. Une violation (SQLSTATE `23P01`) est traduite en erreur métier « créneau indisponible » (HTTP 409). Migration : `CREATE EXTENSION IF NOT EXISTS btree_gist` (déjà activée par l'admin sur Supabase, nécessaire en CI) ;
   - colonnes horaires en `timestamptz` ;
   - tests de concurrence obligatoires.
 - **Tests et base de données** : la CI exécute Pest sur un vrai PostgreSQL 17. En local, sans PostgreSQL, les tests tournent sur SQLite ; les tests qui dépendent de PostgreSQL (contrainte d'exclusion, concurrence) sont ignorés hors PostgreSQL et doivent passer en CI avant tout merge.

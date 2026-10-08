@@ -1,0 +1,31 @@
+name: Keepalive
+
+# Appelle la sonde de santé de l'API chaque jour. Effets :
+# - le projet Supabase gratuit reste actif (il se met en pause après 7 jours sans requête) ;
+# - une panne de l'API ou de la base fait échouer ce workflow, donc envoie une alerte GitHub.
+# À désactiver une fois Supabase et Render passés en plans payants.
+#
+# Configuration : Settings → Secrets and variables → Actions → Variables
+#   HARMONY_API_URL = https://<service>.onrender.com   (sans « / » final)
+
+on:
+  schedule:
+    - cron: '17 6 * * *' # 06:17 UTC (= heure de Lomé), chaque jour
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sonde de santé
+        env:
+          API_URL: ${{ vars.HARMONY_API_URL }}
+        run: |
+          if [ -z "$API_URL" ]; then
+            echo "Variable HARMONY_API_URL non définie : rien à faire."
+            exit 0
+          fi
+          # Render gratuit peut mettre près d'une minute à se réveiller.
+          curl --fail --silent --show-error --max-time 120 \
+               --retry 3 --retry-delay 20 --retry-all-errors \
+               "$API_URL/api/v1/health"
