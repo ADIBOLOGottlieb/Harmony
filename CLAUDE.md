@@ -6,7 +6,7 @@ Application premium de réservation de chambres par créneaux (3h, nuitée, jour
 - `/harmony-api` : Laravel 13 (PHP 8.4, fixé via `config.platform` de Composer), PostgreSQL 17, Sanctum, Reverb, queues + scheduler, admin Filament. Laravel 11 est en fin de vie et bloqué par Composer pour failles connues : ne pas y revenir.
 - Hébergement (plans gratuits pour l'instant) :
   - **Base : Supabase**, région Central EU (Frankfurt), via le **Session pooler** (IPv4, port 5432 ; jamais le port 6543 du mode transaction, incompatible avec les requêtes préparées de PDO). Data API Supabase désactivée : tout passe par l'API Laravel.
-  - **API : Render**, région Frankfurt, conteneur `harmony-api/Dockerfile`, blueprint `render.yaml`. Identifiants de la base saisis en secrets dans Render.
+  - **API : Render**, région Frankfurt, conteneur `harmony-api/Dockerfile`, blueprint `render.yaml`. Identifiants de la base saisis en secrets dans Render. URL de production : https://harmony-api-sfap.onrender.com (sonde : `/api/v1/health`).
   - **Keepalive** : `.github/workflows/keepalive.yml` appelle `/api/v1/health` (qui interroge la base) chaque jour, pour éviter la pause Supabase après 7 jours. À retirer lors du passage aux plans payants.
   - **La configuration de Supabase, Render et des variables GitHub est faite par l'administrateur** : on prépare le dépôt et `docs/deploiement-render.md`, on ne touche pas aux tableaux de bord.
 - Dépôt : https://github.com/ADIBOLOGottlieb/Harmony (monorepo, branche `main`, CI GitHub Actions dans `.github/workflows/ci.yml`).
