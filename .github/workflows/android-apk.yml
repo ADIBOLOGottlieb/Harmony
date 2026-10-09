@@ -6,12 +6,13 @@ name: APK Android (test)
 #
 # APK de test, signé avec la clé de débogage : à ne pas publier sur le Play Store.
 
+# Déclenchement volontaire uniquement : on publie un APK quand une livraison
+# est prête, pas à chaque commit. Pour lancer un build :
+#   git tag build-<n> && git push origin build-<n>
+# (ou bouton « Run workflow » dans l'onglet Actions).
 on:
   push:
-    branches: [main]
-    paths:
-      - 'harmony-app/**'
-      - '.github/workflows/android-apk.yml'
+    tags: ['build-*']
   workflow_dispatch:
 
 permissions:
