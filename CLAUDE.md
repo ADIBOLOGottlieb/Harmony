@@ -1,138 +1,89 @@
-# HARMONY DESIGN — Conventions du projet
+# HARMONY HOME — Conventions du projet
 
-Application premium de réservation de chambres par créneaux (3h, nuitée, journée, 2 jours, 3 jours) avec forfaits, pour Lomé (Togo). Fonction clé : guider le client jusqu'à l'établissement sans qu'il ait besoin d'appeler.
+Plateforme de **conciergerie immobilière** type Airbnb pour Lomé et l'Afrique de l'Ouest francophone : gestion d'un parc d'appartements (location, réservation en ligne, paiement). Phase 2 : biens à vendre et programmes de construction.
 
-## Structure
-- `/harmony-api` : Laravel 13 (PHP 8.4, fixé via `config.platform` de Composer), PostgreSQL 17, Sanctum, Reverb, queues + scheduler, admin Filament. Laravel 11 est en fin de vie et bloqué par Composer pour failles connues : ne pas y revenir.
+## Structure et hébergement
+- `/harmony-api` : Laravel 13 (PHP 8.4, fixé via `config.platform` de Composer), PostgreSQL 17, Sanctum, queues + scheduler, admin Filament. Laravel 11 est en fin de vie et bloqué par Composer pour failles connues : ne pas y revenir.
+- `/harmony-app` : Flutter 3 / Dart 3.
 - Hébergement (plans gratuits pour l'instant) :
   - **Base : Supabase**, région Central EU (Frankfurt), via le **Session pooler** (IPv4, port 5432 ; jamais le port 6543 du mode transaction, incompatible avec les requêtes préparées de PDO). Data API Supabase désactivée : tout passe par l'API Laravel.
-  - **API : Render**, région Frankfurt, conteneur `harmony-api/Dockerfile`, blueprint `render.yaml`. Identifiants de la base saisis en secrets dans Render. URL de production : https://harmony-api-sfap.onrender.com (sonde : `/api/v1/health`).
-  - **Keepalive** : `.github/workflows/keepalive.yml` appelle `/api/v1/health` (qui interroge la base) chaque jour, pour éviter la pause Supabase après 7 jours. À retirer lors du passage aux plans payants.
+  - **API : Render**, région Frankfurt, conteneur `harmony-api/Dockerfile`, blueprint `render.yaml`. URL : https://harmony-api-sfap.onrender.com (sonde : `/api/v1/health`).
+  - **Keepalive** : `.github/workflows/keepalive.yml` appelle la sonde chaque jour (pause Supabase après 7 jours). À retirer lors du passage aux plans payants.
   - **La configuration de Supabase, Render et des variables GitHub est faite par l'administrateur** : on prépare le dépôt et `docs/deploiement-render.md`, on ne touche pas aux tableaux de bord.
-- Dépôt : https://github.com/ADIBOLOGottlieb/Harmony (monorepo, branche `main`, CI GitHub Actions dans `.github/workflows/ci.yml`).
-- `/harmony-app` : Flutter 3 / Dart 3.
-- Interface en français. Devise FCFA en entiers (jamais de décimales ni de float). Fuseau `Africa/Lome` (UTC+0) ; stocker en UTC, afficher en heure locale.
+- Dépôt : https://github.com/ADIBOLOGottlieb/Harmony (monorepo, branche `main`). CI dans `.github/workflows/ci.yml` ; APK de test publié à chaque push sur `harmony-app/` (`android-apk.yml`, onglet Releases).
+- Français par défaut, textes prêts pour l'i18n. Devise FCFA en entiers (jamais de décimales ni de float). Fuseau `Africa/Lome` (UTC+0) ; stocker en UTC, afficher en heure locale.
 
 ## Produit
-- **Créneaux** (`stay_types`, prix par catégorie de chambre) : 3h, nuitée, journée, 2 jours, 3 jours. L'heure exacte de début et de fin est enregistrée.
-- Un client ne voit que les disponibilités réelles et les forfaits proposés, jamais les réservations des autres.
-- **Forfaits** (noms évocateurs, jamais explicites) :
-  - Essentiel : chambre seule.
-  - Romantique : décoration, ambiance lumineuse, musique, boisson de bienvenue.
-  - Gourmand : chambre + repas ou plateau livré à l'heure choisie.
-  - Prestige : Romantique + Gourmand + late check-out + accès prioritaire.
-- **Fonctions** :
-  - tampon ménage de 45 min (configurable) ;
-  - prolongation en un clic si la chambre est libre, avec supplément horaire ;
-  - tarification dynamique (week-end, soirée, jours fériés, heures creuses) ;
-  - check-in autonome par code à usage unique ;
-  - fidélité (points, séjour offert, parrainage) ;
-  - avis privés, visibles uniquement par la direction ;
-  - upsell après réservation ;
-  - liste d'attente avec push dès qu'un créneau se libère.
+- **Zones** (quartier/ville : nom, ville, pays, couverture) et **appartements** (titre, description, type, chambres, salles de bain, capacité, surface, équipements, prix par nuit, caution, galerie, statut disponible/occupé/maintenance, GPS, adresse, zone, propriétaire).
+- **Durées** : nuitées par défaut ; **créneaux de 3 h et journée en option**, activés par appartement par le propriétaire, avec leurs propres prix.
+- **Calendrier par appartement** : jours libres, réservés, bloqués ; blocages et prix saisonniers par le propriétaire ou l'admin.
+- **Réservation** : dates → récapitulatif (prix, frais, caution, total FCFA) → paiement → confirmation avec référence unique, reçu (PDF ou écran), push et e-mail/SMS. Statuts : `pending`, `confirmed`, `cancelled`, `completed`, `refunded`. Politique d'annulation configurable.
+- **Rôles** : client, propriétaire, concierge/gestionnaire, admin.
+- **Espace de gestion** : occupation, revenus, réservations à venir, arrivées/départs du jour ; CRUD biens, photos, tarifs, calendrier ; ménage et maintenance (tâches, statut, responsable) ; clients, historique, avis ; exports CSV/PDF.
+- **Phase 2** : modèle `Bien` (location / vente / programme) ; section « À vendre / Projets » derrière le flag `FEATURE_SALES` (désactivé).
 
 ## Backend (Laravel)
-- API REST `/api/v1`, réponses via API Resources, erreurs de validation en HTTP 422.
-- Logique métier dans des Services (`BookingService`, `PricingService`, `PaymentService`, `ArrivalService`…), jamais dans les contrôleurs. Form Requests pour la validation, Policies pour les droits.
-- Rôles : client, propriétaire, réceptionniste, ménage.
-- Auth : téléphone (format E.164, stocké en `string`) + OTP, tokens Sanctum avec expiration. Confirmation 18+ obligatoire à l'inscription.
-- Tables principales : `users`, `rooms`, `room_categories`, `stay_types`, `packages`, `package_items`, `bookings`, `booking_extras`, `payments`, `price_rules`, `loyalty_points`, `waitlist`, `arrival_tracking`, `venue_guides`, `reviews`.
-- Statuts de réservation : `pending`, `confirmed`, `en_route`, `checked_in`, `completed`, `cancelled`, `expired`.
+- API REST `/api/v1`, réponses via API Resources, erreurs de validation en HTTP 422. Limitation de débit sur l'auth et la réservation.
+- Logique métier dans des Services (`BookingService`, `PricingService`, `PaymentService`…), jamais dans les contrôleurs. Form Requests pour la validation, Policies par rôle.
+- Auth : téléphone (E.164, `string`) + OTP, tokens Sanctum avec expiration.
+- **Toute modification de schéma passe par une NOUVELLE migration**, jamais en éditant une migration existante.
 - **Anti double-réservation** :
-  - tout passe par `BookingService` : création, prolongation, late check-out Prestige ;
-  - transaction + `lockForUpdate` sur la chambre ;
-  - chevauchement testé sur `[start_at, blocked_until)`, où `blocked_until = end_at + tampon`, pour les statuts actifs (`pending`, `confirmed`, `en_route`, `checked_in`) ;
-  - **double sécurité en base** : extension `btree_gist` + contrainte `EXCLUDE USING gist (room_id WITH =, tstzrange(start_at, blocked_until, '[)') WITH &&) WHERE (statut actif)`. Une violation (SQLSTATE `23P01`) est traduite en erreur métier « créneau indisponible » (HTTP 409). Migration : `CREATE EXTENSION IF NOT EXISTS btree_gist` (déjà activée par l'admin sur Supabase, nécessaire en CI) ;
-  - colonnes horaires en `timestamptz` ;
-  - tests de concurrence obligatoires.
-- **Tests et base de données** : la CI exécute Pest sur un vrai PostgreSQL 17. En local, sans PostgreSQL, les tests tournent sur SQLite ; les tests qui dépendent de PostgreSQL (contrainte d'exclusion, concurrence) sont ignorés hors PostgreSQL et doivent passer en CI avant tout merge.
-- **Prix** : calculé par `PricingService` côté serveur. Le total et l'acompte sont figés sur la réservation au moment de sa création ; un changement de règle ne modifie pas une réservation existante.
-- **Paiement** : FedaPay (TMoney/Flooz), acompte de 30 %. Webhook signé et idempotent (identifiant d'événement unique). Les réservations impayées expirent après 30 min (scheduler).
-- **Notifications** : FCM et WhatsApp Cloud API (modèles de messages approuvés), envoyées via les queues.
-- Temps réel : Laravel Reverb, avec polling en repli.
-- Tests Pest obligatoires sur les chevauchements, la concurrence, les webhooks, la tarification et les droits d'accès à l'adresse et au code. Style PSR-12 + Pint.
-
-## Guidage jusqu'à l'établissement
-- **Écran « Y aller »**, débloqué après paiement de l'acompte :
-  - carte avec la position du client, la destination, l'itinéraire, la durée et la distance ;
-  - `flutter_map` + OSM + OSRM, derrière un adaptateur de carte (Google Maps en option) ;
-  - deep links Google Maps / Waze en secours.
-- **Repères** (`venue_guides`) : 3 à 5 photos de l'approche et une description textuelle, ordonnables dans l'admin.
-- Boutons « Appeler / WhatsApp l'accueil » et « Je suis perdu » (ce dernier envoie la position au réceptionniste).
-- **Lien d'arrivée** `harmony.app/arrivee/{token}` :
-  - token aléatoire et non devinable ;
-  - expire après le séjour, ne contient jamais le forfait ;
-  - ouvre l'app (app_links) ou une page web légère (Laravel + Leaflet).
-- **Suivi d'arrivée** :
-  - uniquement pendant le trajet, avec consentement explicite et révocable ;
-  - envoi toutes les 15 s ;
-  - l'admin voit l'ETA en direct ;
-  - aucune localisation en arrière-plan permanent.
-- **Geofence** : à moins de 100 m, l'app propose « Je suis arrivé » et affiche le code d'accès.
-- **Hors-ligne** : itinéraire, photos et code mis en cache (chiffré) dès la confirmation. Le code ne s'affiche que dans la fenêtre du créneau.
-- Les permissions de localisation sont demandées au moment où elles servent, avec une explication claire.
+  - tout passe par `BookingService` (création, prolongation) ;
+  - transaction + `lockForUpdate` sur l'appartement ;
+  - chevauchement testé sur `[start_at, end_at)` pour les statuts actifs (`pending`, `confirmed`) ;
+  - **double sécurité en base** : extension `btree_gist` + contrainte `EXCLUDE USING gist (apartment_id WITH =, tstzrange(start_at, end_at, '[)') WITH &&) WHERE (statut actif)`. Violation (SQLSTATE `23P01`) → erreur métier « dates indisponibles » (HTTP 409). Migration : `CREATE EXTENSION IF NOT EXISTS btree_gist` (déjà activée par l'admin sur Supabase, nécessaire en CI) ;
+  - colonnes horaires en `timestamptz` ; tests de concurrence obligatoires.
+- **Prix** : calculé côté serveur (`PricingService`, prix saisonniers). Total, frais, caution et acompte figés sur la réservation à sa création.
+- **Paiement** : interface `PaymentGateway`, une implémentation par moyen :
+  - Mobile Money Togo (TMoney, Flooz) et carte bancaire via **FedaPay** ;
+  - virement bancaire avec validation manuelle par l'admin ;
+  - acompte puis solde ; remboursements ; journal des transactions ;
+  - webhooks signés et idempotents (identifiant d'événement unique) ;
+  - clés d'API uniquement en variables d'environnement, mode **sandbox** par défaut hors production.
+- **Tests et base de données** : la CI exécute Pest sur un vrai PostgreSQL 17. En local, sans PostgreSQL, les tests tournent sur SQLite ; ceux qui dépendent de PostgreSQL (contrainte d'exclusion, concurrence) sont ignorés hors PostgreSQL et doivent passer en CI. Tests obligatoires : chevauchements, webhooks de paiement, permissions. Style PSR-12 + Pint.
 
 ## Mobile (Flutter)
-- Architecture feature-first : `auth`, `home`, `booking`, `packages`, `payments`, `arrival`, `loyalty`, `profile`.
-- Riverpod, Dio + intercepteur de token, GoRouter, Freezed + json_serializable, `flutter_secure_storage` pour le jeton et le code d'accès.
-- Paquets : `flutter_map`, `geolocator`, `url_launcher`, `app_links`, `google_fonts`, `flutter_animate`, `lottie`, `cached_network_image`, `firebase_messaging`.
-- États chargement, erreur, vide et hors-ligne gérés systématiquement.
-- Widget tests sur le parcours de réservation et l'écran « Y aller ».
+- Architecture feature-first : `catalog` (domaine, données, état, widgets partagés), `home`, `explore`, `apartment`, `bookings`, `favorites`, `profile`, `shell`, `splash` ; à venir `auth`, `booking_flow`, `payments`, `management`.
+- Riverpod, GoRouter (coque à onglets `StatefulShellRoute`), Dio + intercepteur de token, Freezed + json_serializable (à l'arrivée de l'API), `flutter_secure_storage` pour le jeton, `url_launcher` (appel, WhatsApp, carte).
+- Les écrans lisent uniquement les providers de `features/catalog/data/catalog_repository.dart` : brancher l'API ne change que ce fichier.
+- Configuration par `--dart-define` (`lib/core/config/app_config.dart`) : `API_BASE_URL`, `CONCIERGE_PHONE`, `FEATURE_SALES`. Jamais de secret dans l'app.
+- États chargement, erreur, vide et hors-ligne gérés systématiquement ; cache du catalogue ; images à chargement progressif (`HarmonyImage`).
+- Widget tests sur les parcours (recherche, fiche, favoris, réservation à venir), en mode « animations réduites ».
 
-## Design
-- Direction « boutique hotel de nuit ». Sombre par défaut, mode clair optionnel soigné.
-- Couleurs : fond `#0E0A0C`, bordeaux `#5A0F2E`, or satiné `#C9A24D`, ivoire `#F4EDE4` pour le texte.
-- Thème cinéma : salle obscure, rideaux de velours, enseigne à ampoules, grain de pellicule ; les créneaux sont des « séances » (Court-métrage, Séance de minuit, Plein jour, Double programme, Trilogie).
-- Transitions : ouverture (amorce 3-2-1, rideaux, monogramme), iris vers l'intro, entracte (rideaux) vers l'affiche, Hero affiche → fiche. Voir `lib/core/motion/cinematic_transitions.dart`.
-- Typographie : Playfair Display (titres) et Manrope (texte), **embarquées dans `assets/fonts/`** (licence OFL) plutôt que `google_fonts`, pour fonctionner hors-ligne et sans appel réseau.
-- **Un seul fichier source : `lib/core/theme/design_tokens.dart`** (couleurs, espacements, rayons, ombres, styles de texte). Aucune couleur ni taille en dur ailleurs.
-- Material 3 personnalisé :
-  - cartes à rayon 24 ;
-  - bottom sheets ;
-  - boutons pill à léger gradient ;
-  - glassmorphism discret, uniquement sur les barres flottantes ;
-  - lueurs dorées sur les éléments actifs.
-- Mouvement :
-  - transitions Hero liste → détail ;
-  - `flutter_animate` ;
-  - skeleton loaders ;
-  - retour haptique sur les actions clés ;
-  - Lottie pour la confirmation ;
-  - aucune animation gratuite, et respect du réglage « réduire les animations ».
-- Accessibilité : contraste AA (l'or sur le bordeaux est à vérifier), tailles de texte dynamiques, cibles tactiles ≥ 48 dp.
+## Design (agence immobilière haut de gamme)
+- Sobre, rassurant, premium ; photographie d'abord ; beaucoup d'espace ; aucun look « template ».
+- Nom : **HARMONY HOME**. Logo : monogramme « H » sous une double arche (`HarmonyMark`) + logotype « HARMONY / HOME ».
+- Palette : bleu nuit `#14213D` (principale), champagne `#C8A96A` (accent), ivoire `#F7F3EC` (fond), gris chauds ; texte champagne sur fond clair en `#7A5F2A` (contraste AA). Mode sombre cohérent (fond `#0C1220`).
+- Typographie : Playfair Display (titres) et Manrope (texte), **embarquées dans `assets/fonts/`** (OFL) pour fonctionner hors-ligne.
+- **Un seul fichier source : `lib/core/theme/design_tokens.dart`** (palette, `HarmonyColors` en extension de thème, espacements, rayons 8–12 px, ombres douces, durées, styles de texte). Les composants Material sont stylés dans `app_theme.dart` ; aucun écran ne redéfinit couleurs ou tailles.
+- Composants : `PropertyCard` (photo, statut, favori, zone, caractéristiques, prix FCFA), `StatusBadge`, `SectionHeader`, `EmptyState`, `HarmonyImage` + `Skeleton`, `showHarmonySheet`, boutons/champs/chips/feuilles via le thème.
+- Navigation : barre du bas (Accueil, Explorer, Réservations, Favoris, Profil) ; fiche bien en plein écran au-dessus.
+- Mouvement : transitions douces (`softPage`), Hero sur les photos, squelettes, retour haptique ; respect du réglage « réduire les animations ».
+- Accessibilité : contraste AA, cibles ≥ 48 dp, tailles de texte adaptables, libellés sémantiques ; les boutons posés sur une carte cliquable sont des nœuds sémantiques distincts (`Semantics(container: true)`).
+- Photos de démonstration CC0 dans `assets/images/demo/` (voir `CREDITS.md`), à remplacer par les vraies photos servies par l'API.
 - Skills de design disponibles : `material-3`, `ux-designer`, `ui-ux-pro-max`, `frontend-design`. Cette charte prime sur leurs suggestions.
 
-## Discrétion et sécurité
-- Notifications, SMS, WhatsApp et factures n'affichent que « HARMONY », jamais le forfait ni le détail de la réservation. Option de titre de notification neutre.
-- L'adresse exacte n'est révélée qu'après paiement de l'acompte. Le code d'accès n'est visible que pour une réservation payée, pendant la fenêtre du créneau, et il est à usage unique.
-- La position du client n'est stockée que pendant le trajet, puis supprimée au plus tard à la fin du séjour (job planifié).
-- Aucune donnée sensible dans les logs : téléphone, position, code, OTP, token d'arrivée.
-- Secrets uniquement dans `.env`, jamais commités. Ne jamais réutiliser d'identifiants trouvés dans un dépôt cloné.
-- Réservation réservée aux majeurs.
+## Sécurité
+- Aucune donnée sensible dans les logs (téléphone, OTP, coordonnées de paiement). Secrets uniquement dans `.env` / variables d'environnement, jamais commités.
+- L'adresse exacte et l'itinéraire détaillé ne sont communiqués qu'après confirmation de la réservation ; la fiche publique n'affiche que le quartier.
+- Ne jamais réutiliser d'identifiants trouvés dans un dépôt cloné.
 
 ## Plan d'exécution
-1. Initialiser `harmony-api` et `harmony-app`, dépôt git, CI de base, `design_tokens.dart`.
-2. Migrations, modèles, seeders réalistes (Lomé, 8 chambres, 4 forfaits).
-3. `BookingService` + endpoints de disponibilités et de réservation + tests Pest.
-4. Auth téléphone/OTP + 18+.
-5. Écrans Flutter : onboarding, accueil, détail chambre, choix du créneau, forfaits.
-6. Paiement FedaPay + expiration + notifications.
-7. Guidage : « Y aller », repères, lien d'arrivée, suivi ETA, geofence, page web de secours.
-8. Admin Filament : grille d'occupation, prix, forfaits, repères, ETA des clients en route.
-9. Fidélité, liste d'attente, prolongation, avis.
-10. Polish design, tests widget, audit sécurité, build release.
+1. ✅ Design system agence et refonte de tous les écrans (catalogue de démonstration).
+2. Modèles et API : zones, appartements, photos, `Bien` (flag), rôles et Policies, limitation de débit, seeders Lomé, endpoints catalogue.
+3. Écrans catalogue branchés sur l'API : filtres complets (budget, équipements), carte, cache hors-ligne, favoris persistés.
+4. Calendrier et réservation : disponibilités, blocages, prix saisonniers, contrainte anti-chevauchement, flux complet, référence, annulation.
+5. Paiement FedaPay (sandbox), virement, acompte/solde, webhooks, remboursements, reçus.
+6. Espace de gestion : tableau de bord, CRUD, ménage/maintenance, exports CSV/PDF.
 
-## Décisions ouvertes (à trancher avant l'étape concernée)
-- Horaires fixes de la nuitée et de la journée, avant l'étape 2.
-- Durée du late check-out Prestige et tarif horaire de prolongation, avant l'étape 3.
-- Hébergement des tuiles OSM et d'OSRM en production : les serveurs publics sont interdits en usage commercial intensif. Prévoir un fournisseur (MapTiler, Stadia…) ou un auto-hébergement, avant l'étape 7.
-- Seuil du séjour offert (X séjours) et règles de parrainage, avant l'étape 9.
+## Décisions ouvertes
+- Numéro WhatsApp/téléphone du concierge (`CONCIERGE_PHONE`).
+- Frais de service appliqués au client (montant ou pourcentage), avant l'étape 4.
+- Politique d'annulation par défaut, avant l'étape 4.
+- Heures d'arrivée et de départ standard (actuellement 14 h / 11 h dans la démo), avant l'étape 4.
 
 ## Méthode de travail
-- Une étape du plan à la fois. À la fin de chaque étape :
-  - lancer les tests ;
-  - commit (`feat:`, `fix:`, `test:`) ;
-  - résumé en 3 lignes ;
-  - enchaîner sur l'étape suivante sans attendre, sauf blocage ou décision ouverte.
-- Avant de modifier du code existant, le lire. Proposer un plan seulement si le changement sort du périmètre de l'étape.
-- Ne jamais déclarer une tâche terminée sans tests verts.
+- Une étape du plan à la fois, commits petits et atomiques (`feat:`, `fix:`, `test:`, `docs:`).
+- À chaque étape : `flutter analyze`, `flutter test`, `./vendor/bin/pint --test`, `./vendor/bin/pest` ; corriger avant de continuer. Ne jamais déclarer une tâche terminée sans tests verts.
+- Avancer étape par étape avec un APK de test et ses liens à chaque livraison, sauf blocage.
+- Avant de modifier du code existant, le lire. Ne poser de question que si une décision est vraiment bloquante ; sinon choisir le plus raisonnable et le signaler.
