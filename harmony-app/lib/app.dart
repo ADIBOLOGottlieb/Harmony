@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'features/profile/application/theme_mode.dart';
 
 class HarmonyApp extends ConsumerWidget {
   const HarmonyApp({super.key});
@@ -11,10 +12,11 @@ class HarmonyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
-      title: 'HARMONY',
+      title: 'HARMONY HOME',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark(),
-      themeMode: ThemeMode.dark,
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ref.watch(themeModeProvider),
       locale: const Locale('fr'),
       supportedLocales: const [Locale('fr')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,

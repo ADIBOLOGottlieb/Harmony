@@ -1,5 +1,5 @@
 name: harmony_app
-description: "HARMONY — réservation de chambres par créneaux, Lomé."
+description: "HARMONY HOME — conciergerie immobilière, Lomé."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -14,6 +14,7 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^3.4.3
   go_router: ^18.0.2
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:
@@ -22,6 +23,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Photos de démonstration (licence CC0, voir assets/images/CREDITS.md),
+  # embarquées pour que le catalogue s'affiche hors-ligne.
+  assets:
+    - assets/images/demo/
 
   # Polices embarquées (licence OFL) : disponibles hors-ligne, sans appel réseau.
   fonts:

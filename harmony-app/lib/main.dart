@@ -7,7 +7,9 @@ import 'app.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light.copyWith(
+  // Barres système transparentes ; la couleur des icônes suit chaque écran
+  // (AppBarTheme, ou AnnotatedRegion sur les écrans à photo plein cadre).
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     systemNavigationBarColor: Colors.transparent,
   ));

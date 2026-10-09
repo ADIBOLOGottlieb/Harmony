@@ -4,197 +4,167 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/motion/motion.dart';
 import '../../../core/theme/design_tokens.dart';
-import '../../../core/widgets/film_grain.dart';
-import '../../../core/widgets/marquee_sign.dart';
-import '../data/rooms_repository.dart';
-import 'widgets/poster_card.dart';
-import 'widgets/stay_chips.dart';
+import '../../../core/widgets/harmony_image.dart';
+import '../../../core/widgets/harmony_logo.dart';
+import '../../../core/widgets/section_header.dart';
+import '../../catalog/application/search_criteria.dart';
+import '../../catalog/data/catalog_repository.dart';
+import '../../catalog/presentation/property_card.dart';
+import 'search_panel.dart';
+import 'zone_card.dart';
 
-/// « À l'affiche » : enseigne lumineuse, choix de la séance, carrousel d'affiches.
-class HomeScreen extends ConsumerStatefulWidget {
+/// Accueil : bandeau photo et recherche, puis « À la une », « Par zone », « Nouveautés ».
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final _carousel = PageController(viewportFraction: .74);
-  int _current = 0;
+  static const _heroHeight = 340.0;
+  static const _panelOverlap = 64.0;
 
   @override
-  void dispose() {
-    _carousel.dispose();
-    super.dispose();
-  }
-
-  /// Salutation selon l'heure de Lomé (UTC+0, sans heure d'été).
-  String get _greeting {
-    final hour = DateTime.now().toUtc().hour;
-    if (hour < 5 || hour >= 18) return 'Bonsoir';
-    if (hour < 12) return 'Bonjour';
-    return 'Bon après-midi';
-  }
-
-  void _onPosterTap(int index, String roomId) {
-    if (index != _current) {
-      _carousel.animateToPage(index, duration: HMotion.scene, curve: HMotion.emphasized);
-      return;
-    }
-    HapticFeedback.lightImpact();
-    context.push('/home/room/$roomId');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final rooms = ref.watch(roomsProvider);
-    final stay = ref.watch(selectedStayProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final featured = ref.watch(featuredApartmentsProvider);
+    final newest = ref.watch(newestApartmentsProvider);
+    final zones = ref.watch(zonesProvider);
+    final counts = ref.watch(apartmentCountByZoneProvider);
+    final heroPhoto = featured.isEmpty ? null : featured.first.cover;
     final reduced = reduceMotion(context);
 
-    Widget entrance(Widget child, int order) => reduced
+    Widget reveal(Widget child, int order) => reduced
         ? child
         : child
-            .animate(delay: (250 + order * 140).ms)
-            .fadeIn(duration: HMotion.scene, curve: HMotion.enter)
-            .slideY(begin: -.2, end: 0, duration: HMotion.scene, curve: HMotion.enter);
+            .animate(delay: (120 * order).ms)
+            .fadeIn(duration: HMotion.slow, curve: HMotion.enter)
+            .slideY(begin: .08, end: 0, duration: HMotion.slow, curve: HMotion.enter);
 
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          const DecoratedBox(decoration: BoxDecoration(gradient: HGradients.projectorBeam)),
-          SafeArea(
-            child: Column(
-              children: [
-                const SizedBox(height: HSpace.md),
-                entrance(
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: HSpace.lg),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text('${_greeting.toUpperCase()} · LOMÉ', style: HText.credit, overflow: TextOverflow.ellipsis)),
-                        Text('${rooms.length} SALLES', style: HText.credit.copyWith(color: HColors.ivoryFaint)),
-                      ],
-                    ),
-                  ),
-                  0,
-                ),
-                const SizedBox(height: HSpace.sm),
-                entrance(
-                  MarqueeSign(
-                    child: Column(
-                      children: [
-                        Text('À L’AFFICHE', style: HText.marquee.copyWith(fontSize: 28, letterSpacing: 8)),
-                        const SizedBox(height: HSpace.xxs),
-                        Text('ce soir, une seule séance : la vôtre', style: HText.tagline.copyWith(fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                  1,
-                ),
-                const SizedBox(height: HSpace.md),
-                entrance(const StayChips(), 2),
-                Expanded(
-                  child: (rooms.isEmpty
-                      ? const _EmptyBill()
-                      : PageView.builder(
-                          controller: _carousel,
-                          itemCount: rooms.length,
-                          onPageChanged: (i) {
-                            setState(() => _current = i);
-                            HapticFeedback.selectionClick();
-                          },
-                          itemBuilder: (context, i) => AnimatedBuilder(
-                            animation: _carousel,
-                            builder: (context, _) {
-                              final page = _carousel.hasClients && _carousel.position.haveDimensions
-                                  ? _carousel.page!
-                                  : _current.toDouble();
-                              return PosterCard(
-                                room: rooms[i],
-                                stay: stay,
-                                delta: (page - i).clamp(-1.0, 1.0),
-                                onTap: () => _onPosterTap(i, rooms[i].id),
-                              );
-                            },
-                          ),
-                        ))
-                      .animate(delay: reduced ? 0.ms : 650.ms)
-                      .fadeIn(duration: HMotion.curtain, curve: HMotion.enter)
-                      .scaleXY(begin: reduced ? 1 : .88, end: 1, duration: HMotion.curtain, curve: HMotion.enter),
-                ),
-                if (rooms.isNotEmpty) _ReelCounter(current: _current, total: rooms.length),
-                const SizedBox(height: HSpace.md),
-              ],
-            ),
-          ),
-          const Vignette(),
-          const FilmGrain(intensity: .7),
-        ],
-      ),
-    );
-  }
-}
+    void openApartment(String id) => context.push('/bien/$id');
 
-/// Compteur « 03 — 08 » avec une barre de progression façon bobine.
-class _ReelCounter extends StatelessWidget {
-  const _ReelCounter({required this.current, required this.total});
-
-  final int current;
-  final int total;
-
-  String _two(int n) => n.toString().padLeft(2, '0');
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: HSpace.xxl),
-      child: Row(
-        children: [
-          Text(_two(current + 1), style: HText.credit),
-          const SizedBox(width: HSpace.sm),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(HRadius.pill),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        body: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
               child: Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Container(height: 2, color: HColors.hairline),
-                  AnimatedFractionallySizedBox(
-                    duration: HMotion.base,
-                    curve: HMotion.emphasized,
-                    widthFactor: (current + 1) / total,
-                    child: Container(height: 2, decoration: const BoxDecoration(gradient: HGradients.goldSheen)),
+                  SizedBox(
+                    height: _heroHeight,
+                    width: double.infinity,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (heroPhoto != null) HarmonyImage(heroPhoto),
+                        const DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [HPalette.photoScrimDark, HPalette.photoScrimClear, HPalette.photoScrimDark],
+                              stops: [0, .22, .68],
+                            ),
+                          ),
+                        ),
+                        SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(HSpace.gutter, HSpace.sm, HSpace.gutter, _panelOverlap + HSpace.lg),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const HarmonyLogo(color: HPalette.white),
+                                const Spacer(),
+                                Text(
+                                  'CONCIERGERIE IMMOBILIÈRE · LOMÉ',
+                                  style: HText.overline.copyWith(color: HPalette.champagneSoft),
+                                ),
+                                const SizedBox(height: HSpace.xs),
+                                Text(
+                                  'Votre adresse\nd’exception à Lomé',
+                                  style: HText.display.copyWith(color: HPalette.white, fontSize: 30),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(HSpace.gutter, _heroHeight - _panelOverlap, HSpace.gutter, 0),
+                    child: reveal(
+                      SearchPanel(onSearch: () => context.go('/explorer')),
+                      1,
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(width: HSpace.sm),
-          Text(_two(total), style: HText.credit.copyWith(color: HColors.ivoryFaint)),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyBill extends StatelessWidget {
-  const _EmptyBill();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(HSpace.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.theaters_outlined, color: HColors.gold, size: HSpace.xxl),
-            const SizedBox(height: HSpace.md),
-            Text('Relâche ce soir', style: HText.title),
-            const SizedBox(height: HSpace.xs),
-            Text('Aucune salle n’est disponible pour le moment. Revenez un peu plus tard.', style: HText.body, textAlign: TextAlign.center),
+            const SliverToBoxAdapter(child: SizedBox(height: HSpace.xl)),
+            SliverToBoxAdapter(
+              child: reveal(
+                SectionHeader(
+                  overline: 'Sélection',
+                  title: 'Appartements à la une',
+                  actionLabel: 'Tout voir',
+                  onAction: () {
+                    ref.read(searchCriteriaProvider.notifier).reset();
+                    context.go('/explorer');
+                  },
+                ),
+                2,
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 372,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(HSpace.gutter, HSpace.md, HSpace.gutter, HSpace.xs),
+                  itemCount: featured.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: HSpace.md),
+                  itemBuilder: (context, i) => SizedBox(
+                    width: HSize.featuredCardWidth,
+                    child: PropertyCard(apartment: featured[i], onTap: () => openApartment(featured[i].id)),
+                  ),
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: HSpace.lg)),
+            const SliverToBoxAdapter(child: SectionHeader(overline: 'Quartiers', title: 'Par zone')),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: HSize.zoneCardHeight + HSpace.md * 2,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: HSpace.gutter, vertical: HSpace.md),
+                  itemCount: zones.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: HSpace.sm),
+                  itemBuilder: (context, i) => ZoneCard(
+                    zone: zones[i],
+                    count: counts[zones[i].id] ?? 0,
+                    onTap: () {
+                      ref.read(searchCriteriaProvider.notifier).setZone(zones[i].id);
+                      context.go('/explorer');
+                    },
+                  ),
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: HSpace.md)),
+            const SliverToBoxAdapter(child: SectionHeader(overline: 'Récemment ajoutés', title: 'Nouveautés')),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(HSpace.gutter, HSpace.md, HSpace.gutter, HSpace.lg),
+              sliver: SliverList.separated(
+                itemCount: newest.length,
+                separatorBuilder: (_, _) => const SizedBox(height: HSpace.lg),
+                itemBuilder: (context, i) => PropertyCard(apartment: newest[i], onTap: () => openApartment(newest[i].id)),
+              ),
+            ),
+            if (AppConfig.salesSectionEnabled)
+              const SliverToBoxAdapter(child: SectionHeader(overline: 'Bientôt', title: 'À vendre et programmes neufs')),
+            const SliverToBoxAdapter(child: SizedBox(height: HSpace.lg)),
           ],
         ),
       ),
