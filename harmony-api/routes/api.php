@@ -1,10 +1,19 @@
 <?php
 
+use App\Http\Controllers\Api\V1\ApartmentController;
+use App\Http\Controllers\Api\V1\ZoneController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
+    // Catalogue public.
+    Route::middleware('throttle:api')->group(function () {
+        Route::get('/zones', [ZoneController::class, 'index']);
+        Route::get('/apartments', [ApartmentController::class, 'index']);
+        Route::get('/apartments/{apartment}', [ApartmentController::class, 'show']);
+    });
+
     // Sonde de santé : vérifie aussi la base. Appelée chaque jour par la CI
     // (.github/workflows/keepalive.yml), ce qui évite la mise en pause du
     // projet Supabase gratuit après 7 jours sans activité.
