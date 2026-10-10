@@ -9,6 +9,7 @@ import '../../../core/widgets/empty_state.dart';
 import '../../catalog/application/search_criteria.dart';
 import '../../catalog/data/catalog_repository.dart';
 import '../../catalog/domain/apartment.dart';
+import '../../catalog/presentation/filters_sheet.dart';
 import '../../catalog/presentation/property_card.dart';
 import '../../catalog/presentation/search_sheets.dart';
 
@@ -41,6 +42,12 @@ class ExploreScreen extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: HSpace.gutter),
               children: [
+                _CriteriaChip(
+                  icon: Icons.tune_rounded,
+                  label: criteria.advancedCount == 0 ? 'Filtres' : 'Filtres · ${criteria.advancedCount}',
+                  active: criteria.advancedCount > 0,
+                  onTap: () => showFiltersSheet(context),
+                ),
                 _CriteriaChip(
                   icon: Icons.place_outlined,
                   label: zone?.name ?? 'Toutes les zones',
@@ -99,7 +106,7 @@ class ExploreScreen extends ConsumerWidget {
                 ? EmptyState(
                     icon: Icons.travel_explore_rounded,
                     title: 'Aucun bien ne correspond',
-                    message: 'Élargissez la zone, le type de logement ou le nombre de voyageurs.',
+                    message: 'Élargissez la zone, le budget, les équipements ou le nombre de voyageurs.',
                     actionLabel: 'Réinitialiser les filtres',
                     onAction: notifier.reset,
                   )

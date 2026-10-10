@@ -31,6 +31,7 @@ class HomeScreen extends ConsumerWidget {
     final counts = ref.watch(apartmentCountByZoneProvider);
     final heroPhoto = featured.isEmpty ? null : featured.first.cover;
     final reduced = reduceMotion(context);
+    final offline = ref.watch(catalogProvider.select((c) => c.offline));
 
     Widget reveal(Widget child, int order) => reduced
         ? child
@@ -73,7 +74,14 @@ class HomeScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const HarmonyLogo(color: HPalette.white),
+                                Row(
+                                  children: [
+                                    const HarmonyLogo(color: HPalette.white),
+                                    const Spacer(),
+                                    if (offline)
+                                      _OfflinePill(onRetry: () => ref.read(catalogProvider.notifier).refresh()),
+                                  ],
+                                ),
                                 const Spacer(),
                                 Text(
                                   'CONCIERGERIE IMMOBILIÈRE · LOMÉ',
@@ -166,6 +174,47 @@ class HomeScreen extends ConsumerWidget {
               const SliverToBoxAdapter(child: SectionHeader(overline: 'Bientôt', title: 'À vendre et programmes neufs')),
             const SliverToBoxAdapter(child: SizedBox(height: HSpace.lg)),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Catalogue servi depuis le cache : on le dit, et on propose de réessayer.
+class _OfflinePill extends StatelessWidget {
+  const _OfflinePill({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Hors connexion, catalogue enregistré. Toucher pour réessayer.',
+      excludeSemantics: true,
+      child: Material(
+        color: HPalette.photoGlass,
+        shape: const StadiumBorder(),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onRetry();
+          },
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: HSize.touch),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: HSpace.sm),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.cloud_off_outlined, size: HSize.iconSm, color: HPalette.white),
+                  const SizedBox(width: HSpace.xxs),
+                  Text('Hors connexion', style: HText.labelSmall.copyWith(color: HPalette.white)),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

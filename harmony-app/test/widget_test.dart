@@ -1,11 +1,23 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:harmony_app/app.dart';
 import 'package:harmony_app/core/format/dates.dart';
 import 'package:harmony_app/core/format/fcfa.dart';
+import 'package:harmony_app/core/network/api_client.dart';
 import 'package:harmony_app/core/router/app_router.dart';
+import 'package:harmony_app/core/storage/storage.dart';
+import 'package:harmony_app/core/widgets/location_map.dart';
+import 'package:harmony_app/features/auth/application/session.dart';
+import 'package:harmony_app/features/booking/application/booking_draft.dart';
 import 'package:harmony_app/features/catalog/application/favorites.dart';
+import 'package:harmony_app/features/catalog/application/search_criteria.dart';
+import 'package:harmony_app/features/catalog/domain/apartment.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/fake_api.dart';
 
 /// Téléphone de référence : 390 × 844 dp.
 void _phone(WidgetTester tester) {
@@ -21,10 +33,28 @@ void _reducedMotion(WidgetTester tester) {
   addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
 }
 
-Future<ProviderContainer> _launch(WidgetTester tester) async {
+/// Lance l'app avec une API factice (hors connexion par défaut : catalogue de démonstration),
+/// des préférences en mémoire et, au besoin, une session déjà ouverte.
+Future<ProviderContainer> _launch(
+  WidgetTester tester, {
+  FakeApi? api,
+  TokenStore? tokens,
+  bool signedIn = false,
+}) async {
   _phone(tester);
   _reducedMotion(tester);
-  final container = ProviderContainer();
+  final store = tokens ?? MemoryTokenStore();
+  if (signedIn) await store.write('jeton-test');
+  SharedPreferences.setMockInitialValues({
+    if (signedIn) 'session.user.v1': jsonEncode(userJson()),
+  });
+  final preferences = await SharedPreferences.getInstance();
+  final container = ProviderContainer(overrides: [
+    preferencesProvider.overrideWithValue(preferences),
+    apiClientProvider.overrideWithValue((api ?? FakeApi()).dio()),
+    tokenStoreProvider.overrideWithValue(store),
+    mapTilesEnabledProvider.overrideWithValue(false),
+  ]);
   addTearDown(container.dispose);
   await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const HarmonyApp()));
   await tester.pump(const Duration(milliseconds: 700));
@@ -34,6 +64,33 @@ Future<ProviderContainer> _launch(WidgetTester tester) async {
 
 /// Onglet de la barre du bas (le même libellé sert aussi de titre d'écran).
 Finder _tab(String label) => find.descendant(of: find.byType(NavigationBar), matching: find.text(label));
+
+/// Jour libre du calendrier de réservation.
+Future<void> _tapDay(WidgetTester tester, DateTime day) async {
+  final label = '${fullDate(DateTime.utc(day.year, day.month, day.day))}, libre';
+  final cell = find.byWidgetPredicate((w) => w is Semantics && w.properties.label == label);
+  await tester.scrollUntilVisible(cell, 200, scrollable: find.byType(Scrollable).first);
+  await tester.tap(cell);
+  await tester.pumpAndSettle();
+}
+
+/// Fiche Villa Lagune → « Réserver » → deux nuits → récapitulatif.
+Future<void> _openRecap(WidgetTester tester, ProviderContainer container, DateTime checkIn, DateTime checkOut) async {
+  container.read(appRouterProvider).push('/bien/villa-lagune');
+  await tester.pumpAndSettle();
+  await tester.tap(find.widgetWithText(FilledButton, 'Réserver'));
+  await tester.pumpAndSettle();
+  expect(find.text('Vos dates'), findsOneWidget);
+
+  await _tapDay(tester, checkIn);
+  await _tapDay(tester, checkOut);
+  final draft = container.read(bookingDraftProvider)!;
+  expect((draft.checkIn, draft.checkOut, draft.isComplete), (checkIn, checkOut, true));
+
+  await tester.tap(find.text('Voir le récapitulatif'));
+  await tester.pumpAndSettle();
+  expect(find.text('Récapitulatif'), findsOneWidget);
+}
 
 void main() {
   group('Formatage', () {
@@ -60,6 +117,8 @@ void main() {
       expect(find.text('Votre adresse\nd’exception à Lomé'), findsOneWidget);
       expect(find.text('Appartements à la une'), findsOneWidget);
       expect(find.text('Rechercher'), findsOneWidget);
+      // API injoignable : le catalogue embarqué est affiché et signalé.
+      expect(find.text('Hors connexion'), findsOneWidget);
       await tester.scrollUntilVisible(find.text('Nouveautés'), 300, scrollable: find.byType(Scrollable).first);
       expect(find.text('Par zone'), findsOneWidget);
     });
@@ -80,7 +139,26 @@ void main() {
       semantics.dispose();
     });
 
-    testWidgets('la fiche bien affiche équipements, tarifs et réservation', (tester) async {
+    testWidgets('les filtres d’équipements restreignent les résultats', (tester) async {
+      final container = await _launch(tester);
+      await tester.tap(_tab('Explorer'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Filtres'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilterChip, 'Piscine'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Appliquer'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Filtres · 1'), findsOneWidget);
+      expect(container.read(searchCriteriaProvider).amenities, {Amenity.pool});
+      final results = container.read(searchResultsProvider);
+      expect(results, isNotEmpty);
+      expect(results.every((a) => a.amenities.contains(Amenity.pool)), isTrue);
+    });
+
+    testWidgets('la fiche bien affiche équipements, tarifs et carte du quartier', (tester) async {
       final semantics = tester.ensureSemantics();
       await _launch(tester);
 
@@ -92,10 +170,8 @@ void main() {
       expect(find.text('Équipements'), findsOneWidget);
       expect(find.text('Piscine'), findsOneWidget);
       expect(find.text(fcfa(150000)), findsWidgets);
-
-      await tester.tap(find.widgetWithText(FilledButton, 'Réserver'));
-      await tester.pump();
-      expect(find.textContaining('La réservation en ligne arrive'), findsOneWidget);
+      await tester.scrollUntilVisible(find.byType(LocationMap), 300, scrollable: find.byType(Scrollable).first);
+      expect(find.byType(LocationMap), findsOneWidget);
       semantics.dispose();
     });
 
@@ -139,6 +215,108 @@ void main() {
       await tester.tap(find.text('Sombre'));
       await tester.pumpAndSettle();
       expect(Theme.of(tester.element(find.text('Apparence'))).brightness, Brightness.dark);
+    });
+  });
+
+  group('Compte et réservation', () {
+    final today = todayInLome();
+    final checkIn = DateTime(today.year, today.month, today.day + 2);
+    final checkOut = DateTime(today.year, today.month, today.day + 4);
+
+    testWidgets('sans session, l’onglet Réservations invite à se connecter', (tester) async {
+      await _launch(tester);
+      await tester.tap(_tab('Réservations'));
+      await tester.pumpAndSettle();
+      expect(find.text('Connectez-vous pour voir vos séjours'), findsOneWidget);
+    });
+
+    testWidgets('connexion par téléphone et code depuis le profil', (tester) async {
+      final api = FakeApi({
+        'POST /auth/otp': (_) => {'message': 'Code envoyé.', 'debug_code': '123456'},
+        'POST /auth/verify': (_) => {'token': 'jeton-recu', 'user': userJson()},
+      });
+      final tokens = MemoryTokenStore();
+      final container = await _launch(tester, api: api, tokens: tokens);
+
+      await tester.tap(_tab('Profil'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Se connecter'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.widgetWithText(TextField, 'Numéro de téléphone'), '90 00 00 00');
+      await tester.tap(find.widgetWithText(FilledButton, 'Recevoir un code'));
+      await tester.pumpAndSettle();
+      expect(api.last('POST /auth/otp')!.data, {'phone': '+22890000000'});
+      expect(find.textContaining('votre code est 123456'), findsOneWidget);
+
+      await tester.enterText(find.widgetWithText(TextField, 'Code à 6 chiffres'), '123456');
+      await tester.tap(find.widgetWithText(FilledButton, 'Se connecter'));
+      await tester.pumpAndSettle();
+
+      expect(await tokens.read(), 'jeton-recu');
+      expect(container.read(sessionProvider)?.user.name, 'Afi');
+      expect(find.text('Afi'), findsOneWidget);
+      expect(find.text('Se déconnecter'), findsOneWidget);
+    });
+
+    testWidgets('réserver deux nuits et payer par virement', (tester) async {
+      final booking = bookingJson(
+        checkIn: checkIn,
+        checkOut: checkOut,
+        instructions: 'Virement sur le compte HARMONY HOME, référence HH-TEST01.',
+      );
+      final api = FakeApi({
+        'GET /apartments/villa-lagune/availability': (r) => {'data': availabilityJson(r)},
+        'POST /bookings/quote': (_) => {'data': quoteJson(checkIn, checkOut)},
+        'POST /bookings': (_) => FakeReply(201, {'data': booking}),
+        'GET /bookings/HH-TEST01': (_) => {'data': booking},
+      });
+      final container = await _launch(tester, api: api, signedIn: true);
+
+      await _openRecap(tester, container, checkIn, checkOut);
+      expect(find.text('Acompte à payer maintenant'), findsOneWidget);
+      expect(find.text(fcfa(94500)), findsOneWidget);
+      expect(find.text(fcfa(315000)), findsOneWidget);
+
+      await tester.scrollUntilVisible(find.text('Virement bancaire'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.ensureVisible(find.text('Virement bancaire'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Virement bancaire'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Réserver et payer par virement'));
+      await tester.pumpAndSettle();
+
+      final sent = api.last('POST /bookings')!.data as Map;
+      expect(sent['apartment'], 'villa-lagune');
+      expect(sent['stay_type'], 'night');
+      expect(sent['check_in'], isoDay(checkIn));
+      expect(sent['check_out'], isoDay(checkOut));
+      expect(sent['payment_method'], 'bank_transfer');
+
+      expect(find.text('Réservation HH-TEST01'), findsOneWidget);
+      expect(find.text('Paiement en attente'), findsOneWidget);
+      expect(find.textContaining('référence HH-TEST01'), findsOneWidget);
+      // L'adresse exacte n'est jamais affichée avant confirmation.
+      expect(find.text('Adresse'), findsNothing);
+    });
+
+    testWidgets('des dates prises entre-temps affichent un message clair', (tester) async {
+      final api = FakeApi({
+        'GET /apartments/villa-lagune/availability': (r) => {'data': availabilityJson(r)},
+        'POST /bookings/quote': (_) => {'data': quoteJson(checkIn, checkOut)},
+        'POST /bookings': (_) => const FakeReply(409, {
+              'message': 'Ces dates viennent d’être réservées. Choisissez d’autres dates.',
+              'code': 'dates_unavailable',
+            }),
+      });
+      final container = await _launch(tester, api: api, signedIn: true);
+
+      await _openRecap(tester, container, checkIn, checkOut);
+      await tester.tap(find.textContaining('Payer '));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ces dates viennent d’être réservées. Choisissez d’autres dates.'), findsOneWidget);
+      expect(find.text('Récapitulatif'), findsOneWidget);
     });
   });
 }

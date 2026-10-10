@@ -16,12 +16,14 @@ class HarmonyImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context);
-    return Image.asset(
-      asset,
+    // Photo embarquée (« assets/… ») ou téléversée sur l'API (URL), décodée à la
+    // taille d'affichage pour maîtriser la mémoire.
+    final ImageProvider source = asset.startsWith('http') ? NetworkImage(asset) : AssetImage(asset);
+    return Image(
+      image: ResizeImage.resizeIfNeeded(width.round(), null, source),
       fit: fit,
       width: double.infinity,
       height: double.infinity,
-      cacheWidth: width.round(), // décode à la taille d'affichage : mémoire maîtrisée
       semanticLabel: semanticLabel,
       excludeFromSemantics: semanticLabel == null,
       frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {

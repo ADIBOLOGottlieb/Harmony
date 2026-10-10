@@ -21,3 +21,36 @@ int nightsIn(DateTimeRange r) {
 }
 
 String plural(int n, String singular, [String? pluralForm]) => '$n ${n > 1 ? (pluralForm ?? '${singular}s') : singular}';
+
+const _monthsLong = [
+  'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
+];
+const _weekdays = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
+
+/// « octobre 2026 »
+String monthTitle(DateTime d) => '${_monthsLong[d.month - 1]} ${d.year}';
+
+/// Les dates de l'API sont en UTC, qui est aussi l'heure de Lomé (UTC+0, sans heure d'été).
+DateTime lome(DateTime d) => d.toUtc();
+
+/// « mar. 20 oct. 2026 »
+String fullDate(DateTime d) {
+  final l = lome(d);
+  return '${_weekdays[l.weekday - 1]} ${l.day} ${_months[l.month - 1]} ${l.year}';
+}
+
+/// « 14:00 »
+String timeOfDay(DateTime d) {
+  final l = lome(d);
+  return '${l.hour.toString().padLeft(2, '0')}:${l.minute.toString().padLeft(2, '0')}';
+}
+
+/// « 2026-10-20 » (format attendu par l'API).
+String isoDay(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+/// Aujourd'hui à Lomé, sans heure.
+DateTime todayInLome() {
+  final now = DateTime.now().toUtc();
+  return DateTime(now.year, now.month, now.day);
+}

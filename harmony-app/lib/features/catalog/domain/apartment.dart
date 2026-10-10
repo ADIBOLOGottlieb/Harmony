@@ -1,40 +1,54 @@
-/// Types de biens proposés à la location.
+/// Types de biens proposés à la location. `code` : valeur échangée avec l'API.
 enum ApartmentType {
-  studio('Studio'),
-  twoRooms('2 pièces'),
-  threeRooms('3 pièces'),
-  fourRooms('4 pièces'),
-  duplex('Duplex'),
-  villa('Villa');
+  studio('Studio', 'studio'),
+  twoRooms('2 pièces', 'two_rooms'),
+  threeRooms('3 pièces', 'three_rooms'),
+  fourRooms('4 pièces', 'four_rooms'),
+  duplex('Duplex', 'duplex'),
+  villa('Villa', 'villa');
 
-  const ApartmentType(this.label);
+  const ApartmentType(this.label, this.code);
   final String label;
+  final String code;
+
+  static ApartmentType fromCode(String code) => values.firstWhere((t) => t.code == code, orElse: () => twoRooms);
 }
 
 /// Équipements, avec un libellé prêt pour l'i18n.
 enum Amenity {
-  wifi('Wi-Fi'),
-  airConditioning('Climatisation'),
-  parking('Parking'),
-  hotWater('Eau chaude'),
-  generator('Groupe électrogène'),
-  pool('Piscine'),
-  kitchen('Cuisine équipée'),
-  tv('Télévision'),
-  security('Gardiennage 24 h/24'),
-  washer('Lave-linge');
+  wifi('Wi-Fi', 'wifi'),
+  airConditioning('Climatisation', 'air_conditioning'),
+  parking('Parking', 'parking'),
+  hotWater('Eau chaude', 'hot_water'),
+  generator('Groupe électrogène', 'generator'),
+  pool('Piscine', 'pool'),
+  kitchen('Cuisine équipée', 'kitchen'),
+  tv('Télévision', 'tv'),
+  security('Gardiennage 24 h/24', 'security'),
+  washer('Lave-linge', 'washer');
 
-  const Amenity(this.label);
+  const Amenity(this.label, this.code);
   final String label;
+  final String code;
+
+  static Amenity? fromCode(String code) {
+    for (final a in values) {
+      if (a.code == code) return a;
+    }
+    return null;
+  }
 }
 
 enum ApartmentStatus {
-  available('Disponible'),
-  occupied('Réservé'),
-  maintenance('En maintenance');
+  available('Disponible', 'available'),
+  occupied('Réservé', 'occupied'),
+  maintenance('En maintenance', 'maintenance');
 
-  const ApartmentStatus(this.label);
+  const ApartmentStatus(this.label, this.code);
   final String label;
+  final String code;
+
+  static ApartmentStatus fromCode(String code) => values.firstWhere((s) => s.code == code, orElse: () => available);
 }
 
 /// Séjours courts proposés en option par le propriétaire (prix FCFA).

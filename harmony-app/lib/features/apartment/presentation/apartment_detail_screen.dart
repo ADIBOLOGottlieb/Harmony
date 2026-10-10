@@ -6,12 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/config/app_config.dart';
+import '../../../core/contact/concierge.dart';
 import '../../../core/format/dates.dart';
 import '../../../core/format/fcfa.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/harmony_image.dart';
+import '../../../core/widgets/location_map.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../catalog/application/search_criteria.dart';
 import '../../catalog/data/catalog_repository.dart';
@@ -330,6 +331,8 @@ class _LocationCard extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: HSpace.md),
+            LocationMap(latitude: apartment.latitude, longitude: apartment.longitude),
             const SizedBox(height: HSpace.sm),
             Text(
               'L’adresse exacte et l’itinéraire détaillé vous sont communiqués après confirmation de la réservation.',
@@ -392,22 +395,6 @@ class _ReviewsSummary extends StatelessWidget {
 class _ConciergeCard extends StatelessWidget {
   const _ConciergeCard();
 
-  Future<void> _contact(BuildContext context, {required bool whatsapp}) async {
-    const phone = AppConfig.conciergePhone;
-    if (phone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le numéro du concierge sera bientôt disponible.')),
-      );
-      return;
-    }
-    final digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    final uri = whatsapp ? Uri.https('wa.me', '/$digits') : Uri(scheme: 'tel', path: phone);
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Impossible d’ouvrir l’application.')));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -422,7 +409,7 @@ class _ConciergeCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _contact(context, whatsapp: false),
+                    onPressed: () => contactConcierge(context, whatsapp: false),
                     icon: const Icon(Icons.call_outlined),
                     label: const Text('Appeler'),
                   ),
@@ -430,7 +417,7 @@ class _ConciergeCard extends StatelessWidget {
                 const SizedBox(width: HSpace.sm),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () => _contact(context, whatsapp: true),
+                    onPressed: () => contactConcierge(context, whatsapp: true),
                     icon: const Icon(Icons.chat_outlined),
                     label: const Text('WhatsApp'),
                   ),
@@ -483,11 +470,7 @@ class _BookingBar extends StatelessWidget {
                 onPressed: apartment.isBookable
                     ? () {
                         HapticFeedback.mediumImpact();
-                        ScaffoldMessenger.of(context)
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(const SnackBar(
-                            content: Text('La réservation en ligne arrive à la prochaine étape : calendrier, récapitulatif et paiement.'),
-                          ));
+                        context.push('/bien/${apartment.id}/reserver');
                       }
                     : null,
                 child: Text(apartment.isBookable ? 'Réserver' : apartment.status.label),

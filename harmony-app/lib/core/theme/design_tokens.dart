@@ -171,6 +171,8 @@ abstract final class HSize {
   static const zoneCardWidth = 150.0;
   static const zoneCardHeight = 190.0;
   static const photoAspect = 4 / 3;
+  static const mapHeight = 200.0;
+  static const mapZoneRadius = 350.0; // mètres : quartier approximatif avant confirmation
   static const logoMark = 44.0;
 }
 

@@ -1,14 +1,81 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/storage/storage.dart';
 import '../domain/apartment.dart';
 import '../domain/zone.dart';
+import 'catalog_api.dart';
 
-/// Catalogue de démonstration (Lomé) en attendant `GET /api/v1/zones` et
-/// `GET /api/v1/apartments`. Les écrans ne lisent que ces providers : brancher
-/// l'API ne changera que ce fichier.
-final zonesProvider = Provider<List<Zone>>((ref) => _zones);
+/// Catalogue affiché : zones et biens, avec leur provenance.
+class Catalog {
+  const Catalog({required this.zones, required this.apartments, this.offline = false, this.live = false});
 
-final apartmentsProvider = Provider<List<Apartment>>((ref) => _apartments);
+  final List<Zone> zones;
+  final List<Apartment> apartments;
+
+  /// Vrai si la dernière mise à jour depuis l'API a échoué (données en cache ou de démonstration).
+  final bool offline;
+
+  /// Vrai si les données viennent de l'API (directement ou via le cache).
+  final bool live;
+
+  Catalog copyWith({bool? offline}) =>
+      Catalog(zones: zones, apartments: apartments, offline: offline ?? this.offline, live: live);
+}
+
+/// Stratégie hors-ligne : on affiche immédiatement le cache (ou la démo au tout
+/// premier lancement), puis on rafraîchit depuis l'API en arrière-plan.
+final catalogProvider = NotifierProvider<CatalogController, Catalog>(CatalogController.new);
+
+class CatalogController extends Notifier<Catalog> {
+  static const _zonesKey = 'catalog.zones.v1';
+  static const _apartmentsKey = 'catalog.apartments.v1';
+
+  @override
+  Catalog build() {
+    Future.microtask(refresh);
+    return _readCache() ?? Catalog(zones: demoZones, apartments: demoApartments);
+  }
+
+  Future<void> refresh() async {
+    try {
+      final raw = await ref.read(catalogApiProvider).fetchRaw();
+      final prefs = ref.read(preferencesProvider);
+      await prefs.setString(_zonesKey, jsonEncode(raw.zones));
+      await prefs.setString(_apartmentsKey, jsonEncode(raw.apartments));
+      state = Catalog(
+        zones: raw.zones.map(zoneFromJson).toList(),
+        apartments: raw.apartments.map(apartmentFromJson).toList(),
+        live: true,
+      );
+    } catch (_) {
+      state = state.copyWith(offline: true);
+    }
+  }
+
+  Catalog? _readCache() {
+    try {
+      final prefs = ref.read(preferencesProvider);
+      final zones = prefs.getString(_zonesKey);
+      final apartments = prefs.getString(_apartmentsKey);
+      if (zones == null || apartments == null) return null;
+      return Catalog(
+        zones: (jsonDecode(zones) as List).cast<Json>().map(zoneFromJson).toList(),
+        apartments: (jsonDecode(apartments) as List).cast<Json>().map(apartmentFromJson).toList(),
+        live: true,
+      );
+    } catch (_) {
+      return null; // Cache illisible (format ancien) : on repartira de l'API.
+    }
+  }
+}
+
+/// Les écrans ne lisent que ces providers dérivés.
+final zonesProvider = Provider<List<Zone>>((ref) => ref.watch(catalogProvider).zones);
+
+final apartmentsProvider = Provider<List<Apartment>>((ref) => ref.watch(catalogProvider).apartments);
 
 final zoneByIdProvider = Provider.family<Zone?, String>((ref, id) {
   for (final z in ref.watch(zonesProvider)) {
@@ -43,7 +110,7 @@ final apartmentCountByZoneProvider = Provider<Map<String, int>>((ref) {
 
 const _photo = 'assets/images/demo';
 
-const _zones = [
+const demoZones = [
   Zone(id: 'kodjoviakope', name: 'Kodjoviakopé', city: 'Lomé', country: 'Togo', cover: '$_photo/p02.webp'),
   Zone(id: 'baguida', name: 'Baguida', city: 'Lomé', country: 'Togo', cover: '$_photo/p01.webp'),
   Zone(id: 'tokoin', name: 'Tokoin', city: 'Lomé', country: 'Togo', cover: '$_photo/p04.webp'),
@@ -58,7 +125,7 @@ const _standardRules = [
   'Animaux non admis',
 ];
 
-final _apartments = <Apartment>[
+final demoApartments = <Apartment>[
   Apartment(
     id: 'villa-lagune',
     title: 'Villa Lagune',
