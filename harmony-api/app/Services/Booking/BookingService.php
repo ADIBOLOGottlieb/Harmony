@@ -3,6 +3,7 @@
 namespace App\Services\Booking;
 
 use App\Enums\BookingStatus;
+use App\Enums\MaintenanceStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Apartment;
@@ -109,6 +110,8 @@ class BookingService
             ]);
             Payment::query()->where('booking_id', $booking->id)->where('status', PaymentStatus::Pending)
                 ->update(['status' => PaymentStatus::Cancelled]);
+            $booking->maintenanceTasks()->where('status', MaintenanceStatus::Todo)
+                ->update(['status' => MaintenanceStatus::Cancelled]);
         });
 
         if ($refundable > 0) {

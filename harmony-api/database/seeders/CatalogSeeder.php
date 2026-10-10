@@ -55,7 +55,7 @@ class CatalogSeeder extends Seeder
                 'bedrooms' => 4, 'bathrooms' => 3, 'capacity' => 8, 'surface_m2' => 280, 'amenities' => $all,
                 'price_per_night' => 150000, 'deposit' => 300000, 'short_stay_day_price' => 90000,
                 'status' => ApartmentStatus::Available, 'latitude' => 6.1630, 'longitude' => 1.3220,
-                'address' => 'Route d’Aného, Baguida', 'rating' => 4.9, 'review_count' => 38, 'featured' => true,
+                'address' => 'Route d’Aného, Baguida', 'area' => 'Route d’Aného, Baguida', 'rating' => 4.9, 'review_count' => 38, 'featured' => true,
                 'listed_at' => '2026-08-12', 'photos' => ['p01', 'p05', 'p13', 'p03'],
             ],
             [
@@ -65,7 +65,7 @@ class CatalogSeeder extends Seeder
                 'amenities' => $a(Amenity::Wifi, Amenity::AirConditioning, Amenity::Parking, Amenity::HotWater, Amenity::Generator, Amenity::Kitchen, Amenity::Tv, Amenity::Security, Amenity::Washer),
                 'price_per_night' => 95000, 'deposit' => 150000,
                 'status' => ApartmentStatus::Available, 'latitude' => 6.1255, 'longitude' => 1.2050,
-                'address' => 'Boulevard du Mono, Kodjoviakopé', 'rating' => 4.8, 'review_count' => 52, 'featured' => true,
+                'address' => 'Boulevard du Mono, Kodjoviakopé', 'area' => 'Boulevard du Mono, Kodjoviakopé', 'rating' => 4.8, 'review_count' => 52, 'featured' => true,
                 'listed_at' => '2026-09-20', 'photos' => ['p02', 'p06', 'p04', 'p14'],
             ],
             [
@@ -75,7 +75,7 @@ class CatalogSeeder extends Seeder
                 'amenities' => $a(Amenity::Wifi, Amenity::AirConditioning, Amenity::HotWater, Amenity::Kitchen, Amenity::Tv, Amenity::Generator),
                 'price_per_night' => 45000, 'deposit' => 60000, 'short_stay_three_hours_price' => 15000, 'short_stay_day_price' => 30000,
                 'status' => ApartmentStatus::Available, 'latitude' => 6.1450, 'longitude' => 1.2160,
-                'address' => 'Tokoin Hôpital, Lomé', 'rating' => 4.7, 'review_count' => 64, 'featured' => false,
+                'address' => 'Tokoin Hôpital, Lomé', 'area' => 'Tokoin Hôpital, Lomé', 'rating' => 4.7, 'review_count' => 64, 'featured' => false,
                 'listed_at' => '2026-07-02', 'photos' => ['p04', 'p03', 'p12'],
             ],
             [
@@ -85,7 +85,7 @@ class CatalogSeeder extends Seeder
                 'amenities' => $a(Amenity::Wifi, Amenity::AirConditioning, Amenity::HotWater, Amenity::Kitchen, Amenity::Tv),
                 'price_per_night' => 25000, 'deposit' => 30000, 'short_stay_three_hours_price' => 10000, 'short_stay_day_price' => 18000,
                 'status' => ApartmentStatus::Available, 'latitude' => 6.1240, 'longitude' => 1.2090,
-                'address' => 'Rue de la Plage, Kodjoviakopé', 'rating' => 4.6, 'review_count' => 21, 'featured' => false,
+                'address' => 'Rue de la Plage, Kodjoviakopé', 'area' => 'Rue de la Plage, Kodjoviakopé', 'rating' => 4.6, 'review_count' => 21, 'featured' => false,
                 'listed_at' => '2026-10-02', 'photos' => ['p09', 'p13'],
             ],
             [
@@ -95,7 +95,7 @@ class CatalogSeeder extends Seeder
                 'amenities' => $a(Amenity::Wifi, Amenity::AirConditioning, Amenity::Parking, Amenity::HotWater, Amenity::Kitchen, Amenity::Washer),
                 'price_per_night' => 30000, 'deposit' => 40000,
                 'status' => ApartmentStatus::Available, 'latitude' => 6.1800, 'longitude' => 1.1700,
-                'address' => 'Avédji, Lomé', 'rating' => 4.5, 'review_count' => 17, 'featured' => false,
+                'address' => 'Avédji, Lomé', 'area' => 'Avédji, Lomé', 'rating' => 4.5, 'review_count' => 17, 'featured' => false,
                 'listed_at' => '2026-09-28', 'photos' => ['p07', 'p12'],
             ],
             [
@@ -105,7 +105,7 @@ class CatalogSeeder extends Seeder
                 'amenities' => $a(Amenity::Wifi, Amenity::AirConditioning, Amenity::HotWater, Amenity::Tv),
                 'price_per_night' => 28000, 'deposit' => 35000,
                 'status' => ApartmentStatus::Maintenance, 'latitude' => 6.2100, 'longitude' => 1.2000,
-                'address' => 'Agoè Nyivé, Lomé', 'rating' => 4.4, 'review_count' => 9, 'featured' => false,
+                'address' => 'Agoè Nyivé, Lomé', 'area' => 'Agoè Nyivé, Lomé', 'rating' => 4.4, 'review_count' => 9, 'featured' => false,
                 'listed_at' => '2026-06-10', 'photos' => ['p11', 'p14'],
             ],
             [
@@ -115,7 +115,7 @@ class CatalogSeeder extends Seeder
                 'amenities' => $a(Amenity::Wifi, Amenity::AirConditioning, Amenity::Parking, Amenity::HotWater, Amenity::Generator, Amenity::Kitchen, Amenity::Tv),
                 'price_per_night' => 55000, 'deposit' => 80000, 'short_stay_day_price' => 40000,
                 'status' => ApartmentStatus::Occupied, 'latitude' => 6.1480, 'longitude' => 1.2210,
-                'address' => 'Tokoin Wuiti, Lomé', 'rating' => 4.8, 'review_count' => 40, 'featured' => true,
+                'address' => 'Tokoin Wuiti, Lomé', 'area' => 'Tokoin Wuiti, Lomé', 'rating' => 4.8, 'review_count' => 40, 'featured' => true,
                 'listed_at' => '2026-05-15', 'photos' => ['p08', 'p10', 'p13'],
             ],
             [
@@ -125,7 +125,7 @@ class CatalogSeeder extends Seeder
                 'amenities' => $a(Amenity::Wifi, Amenity::AirConditioning, Amenity::Parking, Amenity::HotWater, Amenity::Generator, Amenity::Kitchen, Amenity::Tv, Amenity::Security, Amenity::Washer),
                 'price_per_night' => 110000, 'deposit' => 200000,
                 'status' => ApartmentStatus::Available, 'latitude' => 6.2150, 'longitude' => 1.1950,
-                'address' => 'Agoè Assiyéyé, Lomé', 'rating' => 4.7, 'review_count' => 12, 'featured' => false,
+                'address' => 'Agoè Assiyéyé, Lomé', 'area' => 'Agoè Assiyéyé, Lomé', 'rating' => 4.7, 'review_count' => 12, 'featured' => false,
                 'listed_at' => '2026-09-30', 'photos' => ['p03', 'p05', 'p12'],
             ],
         ];

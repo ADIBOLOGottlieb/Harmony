@@ -3,6 +3,7 @@
 namespace App\Services\Payments;
 
 use App\Enums\BookingStatus;
+use App\Enums\MaintenanceType;
 use App\Enums\PaymentKind;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -156,6 +157,13 @@ class PaymentService
                 $booking->confirmed_at = now();
                 $booking->expires_at = null;
                 $booking->save();
+                // Ménage de sortie planifié dès la confirmation.
+                $booking->maintenanceTasks()->create([
+                    'apartment_id' => $booking->apartment_id,
+                    'type' => MaintenanceType::Cleaning,
+                    'title' => 'Ménage de sortie '.$booking->reference,
+                    'due_at' => $booking->end_at,
+                ]);
                 DB::afterCommit(fn () => $booking->user->notify(new BookingConfirmed($booking)));
 
                 return;

@@ -34,6 +34,7 @@ class ApartmentFactory extends Factory
             'latitude' => 6.13,
             'longitude' => 1.22,
             'address' => 'Lomé',
+            'area' => 'Lomé',
             'rules' => ['Non-fumeur à l’intérieur'],
             'listed_at' => now(),
         ];

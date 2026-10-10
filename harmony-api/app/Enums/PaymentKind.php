@@ -2,7 +2,9 @@
 
 namespace App\Enums;
 
-enum PaymentKind: string
+use Filament\Support\Contracts\HasLabel;
+
+enum PaymentKind: string implements HasLabel
 {
     case Advance = 'advance';
     case Balance = 'balance';
@@ -17,5 +19,10 @@ enum PaymentKind: string
             self::Full => 'Paiement intégral',
             self::Refund => 'Remboursement',
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }

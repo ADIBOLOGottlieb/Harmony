@@ -20,7 +20,7 @@ class Apartment extends Model
     protected $fillable = [
         'slug', 'owner_id', 'zone_id', 'title', 'description', 'type', 'bedrooms', 'bathrooms', 'capacity',
         'surface_m2', 'amenities', 'price_per_night', 'deposit', 'short_stay_three_hours_price',
-        'short_stay_day_price', 'status', 'latitude', 'longitude', 'address', 'rules', 'rating',
+        'short_stay_day_price', 'status', 'latitude', 'longitude', 'address', 'area', 'rules', 'rating',
         'review_count', 'featured', 'listed_at',
     ];
 
@@ -76,6 +76,18 @@ class Apartment extends Model
     public function seasonalPrices(): HasMany
     {
         return $this->hasMany(SeasonalPrice::class);
+    }
+
+    /** @return HasMany<Review, $this> */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /** @return HasMany<MaintenanceTask, $this> */
+    public function maintenanceTasks(): HasMany
+    {
+        return $this->hasMany(MaintenanceTask::class);
     }
 
     /** @return HasMany<Booking, $this> */

@@ -7,6 +7,9 @@
 */
 
 return [
+    // Disque des photos téléversées (public en local ; s3 compatible en production).
+    'media_disk' => env('MEDIA_DISK', 'public'),
+
     // Horaires standards (heure de Lomé, UTC+0).
     'check_in_time' => env('HARMONY_CHECK_IN', '14:00'),
     'check_out_time' => env('HARMONY_CHECK_OUT', '11:00'),

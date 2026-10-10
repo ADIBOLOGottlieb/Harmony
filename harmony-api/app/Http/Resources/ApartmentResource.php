@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Enums\Amenity;
 use App\Models\Apartment;
+use App\Support\Media;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -40,7 +41,7 @@ class ApartmentResource extends JsonResource
             'location' => [
                 'latitude' => round($this->latitude, 3),
                 'longitude' => round($this->longitude, 3),
-                'area' => $this->address,
+                'area' => $this->area ?? $this->zone?->name,
             ],
             'rules' => $this->rules,
             'rating' => $this->rating,
@@ -48,7 +49,7 @@ class ApartmentResource extends JsonResource
             'featured' => $this->featured,
             'listed_at' => $this->listed_at?->toIso8601String(),
             'photos' => $this->whenLoaded('photos', fn () => $this->photos->map(fn ($p) => [
-                'path' => $p->path,
+                'path' => Media::url($p->path),
                 'caption' => $p->caption,
             ])->values()),
         ];

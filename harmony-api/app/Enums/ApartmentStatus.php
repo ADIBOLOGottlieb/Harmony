@@ -2,7 +2,9 @@
 
 namespace App\Enums;
 
-enum ApartmentStatus: string
+use Filament\Support\Contracts\HasLabel;
+
+enum ApartmentStatus: string implements HasLabel
 {
     case Available = 'available';
     case Occupied = 'occupied';
@@ -15,5 +17,10 @@ enum ApartmentStatus: string
             self::Occupied => 'Réservé',
             self::Maintenance => 'En maintenance',
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }

@@ -2,7 +2,9 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Support\Media;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -29,7 +31,7 @@ class BookingResource extends JsonResource
                 'slug' => $apartment->slug,
                 'title' => $apartment->title,
                 'zone' => $apartment->zone?->name,
-                'cover' => $apartment->photos()->value('path'),
+                'cover' => Media::url($apartment->photos()->orderBy('position')->value('path')),
                 // Adresse exacte et position précise réservées aux séjours confirmés.
                 'address' => $exact ? $apartment->address : null,
                 'latitude' => $exact ? $apartment->latitude : null,
@@ -51,6 +53,8 @@ class BookingResource extends JsonResource
             'confirmed_at' => $this->confirmed_at?->toIso8601String(),
             'cancelled_at' => $this->cancelled_at?->toIso8601String(),
             'payments' => PaymentResource::collection($this->whenLoaded('payments')),
+            'review' => $this->review ? ['rating' => $this->review->rating, 'comment' => $this->review->comment] : null,
+            'can_review' => $this->status === BookingStatus::Completed && ! $this->review,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

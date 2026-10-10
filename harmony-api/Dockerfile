@@ -7,6 +7,7 @@ ENV PHP_OPCACHE_ENABLE=1 \
     # Au démarrage : migrations (--force) puis mise en cache config/routes/vues.
     AUTORUN_ENABLED=true \
     AUTORUN_LARAVEL_MIGRATION=true \
+    AUTORUN_LARAVEL_STORAGE_LINK=true \
     LOG_CHANNEL=stderr
 
 WORKDIR /var/www/html
@@ -17,6 +18,10 @@ RUN composer install --no-dev --no-interaction --prefer-dist --no-progress --no-
 
 COPY --chown=www-data:www-data . .
 RUN composer dump-autoload --optimize --no-dev \
-    && php artisan package:discover --ansi
+    && php artisan package:discover --ansi \
+    && php artisan filament:assets --ansi
+
+# Catalogue de démonstration au premier démarrage (HARMONY_SEED_DEMO=true).
+COPY --chmod=755 docker/entrypoint.d/ /etc/entrypoint.d/
 
 EXPOSE 8080

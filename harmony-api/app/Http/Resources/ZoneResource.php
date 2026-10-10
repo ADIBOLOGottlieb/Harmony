@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Zone;
+use App\Support\Media;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,7 +18,7 @@ class ZoneResource extends JsonResource
             'name' => $this->name,
             'city' => $this->city,
             'country' => $this->country,
-            'cover' => $this->cover_path,
+            'cover' => Media::url($this->cover_path),
             'apartments_count' => $this->whenCounted('apartments'),
         ];
     }

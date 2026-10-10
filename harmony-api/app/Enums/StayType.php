@@ -2,7 +2,9 @@
 
 namespace App\Enums;
 
-enum StayType: string
+use Filament\Support\Contracts\HasLabel;
+
+enum StayType: string implements HasLabel
 {
     case Night = 'night';
     case Day = 'day';
@@ -15,5 +17,10 @@ enum StayType: string
             self::Day => 'Journée',
             self::ThreeHours => 'Créneau de 3 heures',
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }

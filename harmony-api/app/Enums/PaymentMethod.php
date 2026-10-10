@@ -2,7 +2,9 @@
 
 namespace App\Enums;
 
-enum PaymentMethod: string
+use Filament\Support\Contracts\HasLabel;
+
+enum PaymentMethod: string implements HasLabel
 {
     case MobileMoney = 'mobile_money';
     case Card = 'card';
@@ -15,5 +17,10 @@ enum PaymentMethod: string
             self::Card => 'Carte bancaire',
             self::BankTransfer => 'Virement bancaire',
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }

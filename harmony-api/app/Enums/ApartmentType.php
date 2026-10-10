@@ -2,7 +2,9 @@
 
 namespace App\Enums;
 
-enum ApartmentType: string
+use Filament\Support\Contracts\HasLabel;
+
+enum ApartmentType: string implements HasLabel
 {
     case Studio = 'studio';
     case TwoRooms = 'two_rooms';
@@ -21,5 +23,10 @@ enum ApartmentType: string
             self::Duplex => 'Duplex',
             self::Villa => 'Villa',
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }

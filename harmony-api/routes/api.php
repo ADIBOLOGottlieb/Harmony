@@ -40,6 +40,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
             Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);
             Route::post('/bookings/{booking}/pay-balance', [BookingController::class, 'payBalance']);
+            Route::post('/bookings/{booking}/review', [BookingController::class, 'review']);
         });
     });
 
