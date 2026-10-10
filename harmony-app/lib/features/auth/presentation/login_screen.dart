@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/harmony_logo.dart';
@@ -19,7 +20,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _phone = TextEditingController(text: '+228 ');
+  final _phone = TextEditingController(text: t('+228 '));
   final _code = TextEditingController();
   final _name = TextEditingController();
   String? _sentTo;
@@ -38,7 +39,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _send() async {
     final phone = normalizePhone(_phone.text);
     if (!RegExp(r'^\+[1-9]\d{7,14}$').hasMatch(phone)) {
-      setState(() => _error = 'Saisissez un numéro valide, par exemple +228 90 12 34 56.');
+      setState(() => _error = t('Saisissez un numéro valide, par exemple +228 90 12 34 56.'));
       return;
     }
     await _run(() async {
@@ -53,7 +54,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _verify() async {
     if (!RegExp(r'^\d{6}$').hasMatch(_code.text.trim())) {
-      setState(() => _error = 'Le code contient 6 chiffres.');
+      setState(() => _error = t('Le code contient 6 chiffres.'));
       return;
     }
     await _run(() async {
@@ -87,7 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final codeStep = _sentTo != null;
     return Scaffold(
-      appBar: AppBar(title: const Text('Connexion')),
+      appBar: AppBar(title: Text(t('Connexion'))),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(HSpace.gutter),
@@ -95,15 +96,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const Center(child: HarmonyMark(size: 64)),
             const SizedBox(height: HSpace.lg),
             Text(
-              codeStep ? 'Entrez le code reçu' : 'Votre numéro de téléphone',
+              codeStep ? t('Entrez le code reçu') : t('Votre numéro de téléphone'),
               style: context.tt.headlineMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: HSpace.xs),
             Text(
               codeStep
-                  ? 'Nous avons envoyé un code à 6 chiffres au $_sentTo.'
-                  : 'Recevez un code par SMS pour réserver et suivre vos séjours. Aucun mot de passe à retenir.',
+                  ? t('Nous avons envoyé un code à 6 chiffres au {phone}.', {'phone': _sentTo})
+                  : t('Recevez un code par SMS pour réserver et suivre vos séjours. Aucun mot de passe à retenir.'),
               style: context.tt.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -113,7 +114,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 controller: _phone,
                 keyboardType: TextInputType.phone,
                 autofillHints: const [AutofillHints.telephoneNumber],
-                decoration: const InputDecoration(labelText: 'Numéro de téléphone', prefixIcon: Icon(Icons.phone_outlined)),
+                decoration: InputDecoration(labelText: t('Numéro de téléphone'), prefixIcon: Icon(Icons.phone_outlined)),
                 onSubmitted: (_) => _send(),
               )
             else ...[
@@ -123,7 +124,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   padding: const EdgeInsets.all(HSpace.md),
                   decoration: BoxDecoration(color: context.hc.accentSoft, borderRadius: BorderRadius.circular(HRadius.md)),
                   child: Text(
-                    'Mode démonstration (aucun SMS envoyé) : votre code est $_debugCode.',
+                    t('Mode démonstration (aucun SMS envoyé) : votre code est {code}.', {'code': _debugCode}),
                     style: HText.labelSmall.copyWith(color: context.cs.onSurface),
                   ),
                 ),
@@ -133,14 +134,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 autofillHints: const [AutofillHints.oneTimeCode],
                 maxLength: 6,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(labelText: 'Code à 6 chiffres', prefixIcon: Icon(Icons.lock_outline_rounded), counterText: ''),
+                decoration: InputDecoration(labelText: t('Code à 6 chiffres'), prefixIcon: Icon(Icons.lock_outline_rounded), counterText: ''),
               ),
               const SizedBox(height: HSpace.sm),
               TextField(
                 controller: _name,
                 textCapitalization: TextCapitalization.words,
                 autofillHints: const [AutofillHints.givenName],
-                decoration: const InputDecoration(labelText: 'Votre prénom (facultatif)', prefixIcon: Icon(Icons.person_outline_rounded)),
+                decoration: InputDecoration(labelText: t('Votre prénom (facultatif)'), prefixIcon: Icon(Icons.person_outline_rounded)),
                 onSubmitted: (_) => _verify(),
               ),
             ],
@@ -156,15 +157,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               onPressed: _busy ? null : (codeStep ? _verify : _send),
               child: _busy
                   ? SizedBox.square(dimension: HSize.icon, child: CircularProgressIndicator(strokeWidth: 2, color: context.cs.onPrimary))
-                  : Text(codeStep ? 'Se connecter' : 'Recevoir un code'),
+                  : Text(codeStep ? t('Se connecter') : t('Recevoir un code')),
             ),
             if (codeStep) ...[
               const SizedBox(height: HSpace.xs),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  TextButton(onPressed: _busy ? null : () => setState(() => _sentTo = null), child: const Text('Changer de numéro')),
-                  TextButton(onPressed: _busy ? null : _send, child: const Text('Renvoyer le code')),
+                  TextButton(onPressed: _busy ? null : () => setState(() => _sentTo = null), child: Text(t('Changer de numéro'))),
+                  TextButton(onPressed: _busy ? null : _send, child: Text(t('Renvoyer le code'))),
                 ],
               ),
             ],

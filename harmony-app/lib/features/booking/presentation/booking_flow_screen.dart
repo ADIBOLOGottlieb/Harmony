@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/format/dates.dart';
-import '../../../core/format/fcfa.dart';
+import '../../../core/format/money.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/empty_state.dart';
@@ -53,7 +54,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
     final notifier = ref.read(bookingDraftProvider.notifier);
 
     if (draft.stayType != StayType.night) {
-      if (status == DayStatus.blocked) return _snack('Ce jour n’est pas disponible.');
+      if (status == DayStatus.blocked) return _snack(t('Ce jour n’est pas disponible.'));
       notifier.update((d) => d.copyWith(checkIn: () => date, checkOut: () => null));
       return;
     }
@@ -61,7 +62,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
     final checkIn = draft.checkIn;
     // Choix de l'arrivée (ou nouvelle sélection).
     if (checkIn == null || draft.checkOut != null || !date.isAfter(checkIn)) {
-      if (status != DayStatus.free) return _snack('Pas d’arrivée possible ce jour-là : la nuit est déjà prise.');
+      if (status != DayStatus.free) return _snack(t('Pas d’arrivée possible ce jour-là : la nuit est déjà prise.'));
       notifier.update((d) => d.copyWith(checkIn: () => date, checkOut: () => null));
       return;
     }
@@ -69,7 +70,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
     for (var night = checkIn; night.isBefore(date); night = night.add(const Duration(days: 1))) {
       if (days[night]?.status != DayStatus.free) {
         notifier.update((d) => d.copyWith(checkIn: () => null, checkOut: () => null));
-        return _snack('Certaines nuits de cette période sont déjà réservées.');
+        return _snack(t('Certaines nuits de cette période sont déjà réservées.'));
       }
     }
     notifier.update((d) => d.copyWith(checkOut: () => date));
@@ -82,7 +83,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
     if (apartment == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const EmptyState(icon: Icons.home_work_outlined, title: 'Bien introuvable', message: 'Ce logement n’est plus proposé.'),
+        body: EmptyState(icon: Icons.home_work_outlined, title: t('Bien introuvable'), message: t('Ce logement n’est plus proposé.')),
       );
     }
     if (draft == null || draft.apartmentId != apartment.id) {
@@ -97,14 +98,14 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Vos dates')),
+      appBar: AppBar(title: Text(t('Vos dates'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(HSpace.gutter, 0, HSpace.gutter, HSpace.xl),
         children: [
           _ApartmentHeader(apartment: apartment),
           const SizedBox(height: HSpace.lg),
           if (stayTypes.length > 1) ...[
-            Text('Type de séjour', style: context.tt.titleMedium),
+            Text(t('Type de séjour'), style: context.tt.titleMedium),
             const SizedBox(height: HSpace.xs),
             SegmentedButton<StayType>(
               showSelectedIcon: false,
@@ -132,7 +133,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
                     const SizedBox(height: HSpace.sm),
                     OutlinedButton(
                       onPressed: () => ref.invalidate(availabilityProvider(apartment.id)),
-                      child: const Text('Réessayer'),
+                      child: Text(t('Réessayer')),
                     ),
                   ],
                 ),
@@ -158,7 +159,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
             },
           ),
           if (draft.stayType == StayType.threeHours && draft.checkIn != null) ...[
-            Text('Heure d’arrivée', style: context.tt.titleMedium),
+            Text(t('Heure d’arrivée'), style: context.tt.titleMedium),
             const SizedBox(height: HSpace.xs),
             Wrap(
               spacing: HSpace.xs,
@@ -208,7 +209,7 @@ class _ApartmentHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(apartment.title, style: context.tt.titleMedium),
-              Text('${fcfa(apartment.pricePerNight)} / nuit', style: context.tt.bodyMedium),
+              Text(t('{amount} / nuit', {'amount': price(apartment.pricePerNight)}), style: context.tt.bodyMedium),
             ],
           ),
         ),
@@ -227,15 +228,21 @@ class _SelectionSummary extends StatelessWidget {
     String text;
     final checkIn = draft.checkIn;
     if (checkIn == null) {
-      text = draft.stayType == StayType.night ? 'Touchez votre date d’arrivée.' : 'Touchez le jour souhaité.';
+      text = draft.stayType == StayType.night ? t('Touchez votre date d’arrivée.') : t('Touchez le jour souhaité.');
     } else if (draft.stayType == StayType.night) {
       text = draft.checkOut == null
-          ? 'Arrivée le ${shortDate(checkIn)} à partir de 14 h. Touchez maintenant la date de départ.'
-          : '${plural(draft.checkOut!.difference(checkIn).inDays, 'nuit')} · arrivée le ${shortDate(checkIn)} (14 h), départ le ${shortDate(draft.checkOut!)} (11 h)';
+          ? t('Arrivée le {date} à partir de 14 h. Touchez maintenant la date de départ.', {'date': shortDate(checkIn)})
+          : t('{nights} · arrivée le {from} (14 h), départ le {to} (11 h)', {
+              'nights': plural(draft.checkOut!.difference(checkIn).inDays, 'nuit'),
+              'from': shortDate(checkIn),
+              'to': shortDate(draft.checkOut!),
+            });
     } else if (draft.stayType == StayType.day) {
-      text = 'Journée du ${shortDate(checkIn)}, de 10 h à 18 h.';
+      text = t('Journée du {date}, de 10 h à 18 h.', {'date': shortDate(checkIn)});
     } else {
-      text = draft.startTime == null ? 'Choisissez l’heure d’arrivée ci-dessous.' : 'Le ${shortDate(checkIn)} à ${draft.startTime}, pendant 3 heures.';
+      text = draft.startTime == null
+          ? t('Choisissez l’heure d’arrivée ci-dessous.')
+          : t('Le {date} à {time}, pendant 3 heures.', {'date': shortDate(checkIn), 'time': draft.startTime});
     }
     return Semantics(
       liveRegion: true,
@@ -269,19 +276,19 @@ class _GuestsRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Voyageurs', style: context.tt.titleMedium),
-              Text('Jusqu’à $capacity personnes', style: context.tt.bodyMedium),
+              Text(t('Voyageurs'), style: context.tt.titleMedium),
+              Text(t('Jusqu’à {count} personnes', {'count': capacity}), style: context.tt.bodyMedium),
             ],
           ),
         ),
         IconButton.outlined(
-          tooltip: 'Retirer un voyageur',
+          tooltip: t('Retirer un voyageur'),
           onPressed: guests > 1 ? () => onChanged(guests - 1) : null,
           icon: const Icon(Icons.remove_rounded),
         ),
         SizedBox(width: HSize.touch, child: Text('$guests', textAlign: TextAlign.center, style: context.tt.titleLarge)),
         IconButton.outlined(
-          tooltip: 'Ajouter un voyageur',
+          tooltip: t('Ajouter un voyageur'),
           onPressed: guests < capacity ? () => onChanged(guests + 1) : null,
           icon: const Icon(Icons.add_rounded),
         ),
@@ -309,7 +316,7 @@ class _BottomBar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(HSpace.gutter, HSpace.sm, HSpace.gutter, HSpace.sm),
           child: FilledButton(
             onPressed: enabled ? onContinue : null,
-            child: const Text('Voir le récapitulatif'),
+            child: Text(t('Voir le récapitulatif')),
           ),
         ),
       ),

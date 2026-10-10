@@ -37,6 +37,12 @@ class SessionController extends Notifier<Session?> {
     state = Session(user);
   }
 
+  /// Profil mis à jour (photo, nom) : la session garde le même jeton.
+  Future<void> updateUser(AppUser user) async {
+    await ref.read(preferencesProvider).setString(_userKey, jsonEncode(user.toJson()));
+    state = Session(user);
+  }
+
   Future<void> signOut() async {
     await ref.read(authApiProvider).logout();
     await _clear();

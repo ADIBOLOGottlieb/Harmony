@@ -33,6 +33,8 @@ class FakeApi implements HttpClientAdapter {
   @override
   Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
     requests.add(options);
+    // Consomme le corps (fichiers envoyés) comme un vrai client HTTP.
+    await requestStream?.drain<void>();
     final handler = routes['${options.method} ${options.path}'];
     if (handler == null) {
       throw DioException.connectionError(requestOptions: options, reason: 'hors connexion (test)');
@@ -138,4 +140,41 @@ Map<String, dynamic> bookingJson({
           'instructions': instructions,
         },
       ],
+    };
+
+// ---------------------------------------------------------------------------
+// Galerie.
+
+Map<String, dynamic> artworkJson({String slug = 'rythmes', String status = 'available'}) => {
+      'slug': slug,
+      'title': slug == 'rythmes' ? 'Rythmes' : 'Kente du matin',
+      'description': 'Pièce unique signée par l’artiste.',
+      'medium': 'Encre de Chine sur papier coton',
+      'dimensions': '56 × 76 cm',
+      'year': 2024,
+      'price': 260000,
+      'status': status,
+      'status_label': 'Disponible',
+      'featured': false,
+      'delivery_fee': 10000,
+      'artist': {'slug': 'esi-adjovi', 'name': 'Esi Adjovi', 'bio': 'Artiste pluridisciplinaire.', 'country': 'Togo', 'portrait': null},
+      'photos': ['demo/art/a08.webp'],
+    };
+
+Map<String, dynamic> artworkOrderJson({String delivery = 'pickup'}) => {
+      'reference': 'GA-TEST01',
+      'status': 'pending',
+      'status_label': 'En attente de règlement',
+      'artwork': {'slug': 'rythmes', 'title': 'Rythmes', 'artist': 'Esi Adjovi', 'cover': 'demo/art/a08.webp'},
+      'price': 260000,
+      'delivery_method': delivery,
+      'delivery_label': 'Retrait à la galerie',
+      'delivery_fee': delivery == 'delivery' ? 10000 : 0,
+      'total': delivery == 'delivery' ? 270000 : 260000,
+      'delivery_address': null,
+      'note': null,
+      'expires_at': '2026-10-12T08:00:00+00:00',
+      'paid_at': null,
+      'created_at': '2026-10-10T08:00:00+00:00',
+      'payment_instructions': 'La galerie vous contacte sous 24 h.',
     };

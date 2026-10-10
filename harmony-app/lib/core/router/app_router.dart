@@ -10,6 +10,9 @@ import '../../features/booking/presentation/booking_recap_screen.dart';
 import '../../features/bookings/presentation/bookings_screen.dart';
 import '../../features/explore/presentation/explore_screen.dart';
 import '../../features/favorites/presentation/favorites_screen.dart';
+import '../../features/gallery/presentation/artwork_detail_screen.dart';
+import '../../features/gallery/presentation/artwork_orders_screen.dart';
+import '../../features/gallery/presentation/gallery_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/shell/presentation/main_shell.dart';
@@ -47,6 +50,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       overShell('/bien/:id/recapitulatif', (s) => BookingRecapScreen(apartmentId: s.pathParameters['id']!)),
       overShell('/reservation/:ref', (s) => BookingDetailScreen(reference: s.pathParameters['ref']!)),
       overShell('/connexion', (_) => const LoginScreen()),
+      overShell('/galerie', (_) => const GalleryScreen()),
+      overShell('/galerie/:slug', (s) => ArtworkDetailScreen(slug: s.pathParameters['slug']!)),
+      overShell('/acquisitions', (_) => const ArtworkOrdersScreen()),
     ],
   );
 });

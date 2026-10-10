@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/format/dates.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/harmony_sheet.dart';
 import '../application/search_criteria.dart';
@@ -11,7 +13,7 @@ import '../data/catalog_repository.dart';
 Future<void> pickZone(BuildContext context, WidgetRef ref) {
   return showHarmonySheet<void>(
     context,
-    title: 'Où souhaitez-vous séjourner ?',
+    title: t('Où souhaitez-vous séjourner ?'),
     builder: (context) => Consumer(
       builder: (context, ref, _) {
         final zones = ref.watch(zonesProvider);
@@ -27,11 +29,11 @@ Future<void> pickZone(BuildContext context, WidgetRef ref) {
           shrinkWrap: true,
           padding: const EdgeInsets.only(bottom: HSpace.lg),
           children: [
-            _ZoneTile(label: 'Toutes les zones', subtitle: 'Lomé et environs', selected: selected == null, onTap: () => choose(null)),
+            _ZoneTile(label: t('Toutes les zones'), subtitle: t('Lomé et environs'), selected: selected == null, onTap: () => choose(null)),
             for (final z in zones)
               _ZoneTile(
                 label: z.name,
-                subtitle: '${z.city} · ${counts[z.id] ?? 0} bien${(counts[z.id] ?? 0) > 1 ? 's' : ''}',
+                subtitle: '${z.city} · ${plural(counts[z.id] ?? 0, 'bien')}',
                 selected: selected == z.id,
                 onTap: () => choose(z.id),
               ),
@@ -73,7 +75,7 @@ Future<void> pickDates(BuildContext context, WidgetRef ref) async {
     firstDate: now,
     lastDate: now.add(const Duration(days: 365)),
     initialDateRange: current,
-    helpText: 'Vos dates de séjour',
+    helpText: t('Vos dates de séjour'),
     saveText: 'Valider',
     fieldStartLabelText: 'Arrivée',
     fieldEndLabelText: 'Départ',
@@ -85,7 +87,7 @@ Future<void> pickDates(BuildContext context, WidgetRef ref) async {
 Future<void> pickGuests(BuildContext context, WidgetRef ref) {
   return showHarmonySheet<void>(
     context,
-    title: 'Voyageurs',
+    title: t('Voyageurs'),
     builder: (context) => Consumer(
       builder: (context, ref, _) {
         final guests = ref.watch(searchCriteriaProvider).guests;
@@ -102,13 +104,13 @@ Future<void> pickGuests(BuildContext context, WidgetRef ref) {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Adultes et enfants', style: context.tt.titleMedium),
-                        Text('Capacité maximale du logement', style: context.tt.bodyMedium),
+                        Text(t('Adultes et enfants'), style: context.tt.titleMedium),
+                        Text(t('Capacité maximale du logement'), style: context.tt.bodyMedium),
                       ],
                     ),
                   ),
                   IconButton.outlined(
-                    tooltip: 'Retirer un voyageur',
+                    tooltip: t('Retirer un voyageur'),
                     onPressed: guests > 1 ? () => notifier.setGuests(guests - 1) : null,
                     icon: const Icon(Icons.remove_rounded),
                   ),
@@ -117,14 +119,14 @@ Future<void> pickGuests(BuildContext context, WidgetRef ref) {
                     child: Text('$guests', textAlign: TextAlign.center, style: context.tt.titleLarge),
                   ),
                   IconButton.outlined(
-                    tooltip: 'Ajouter un voyageur',
+                    tooltip: t('Ajouter un voyageur'),
                     onPressed: guests < 16 ? () => notifier.setGuests(guests + 1) : null,
                     icon: const Icon(Icons.add_rounded),
                   ),
                 ],
               ),
               const SizedBox(height: HSpace.lg),
-              FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Valider')),
+              FilledButton(onPressed: () => Navigator.of(context).pop(), child: Text(t('Valider'))),
             ],
           ),
         );

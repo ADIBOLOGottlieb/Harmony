@@ -4,13 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 
 class AppUser {
-  const AppUser({required this.id, required this.phone, this.name, this.email, required this.role});
+  const AppUser({required this.id, required this.phone, this.name, this.email, required this.role, this.avatar});
 
   final int id;
   final String phone;
   final String? name;
   final String? email;
   final String role;
+
+  /// URL de la photo de profil (null : initiale affichée).
+  final String? avatar;
 
   String get displayName => (name == null || name!.trim().isEmpty) ? phone : name!;
 
@@ -20,9 +23,11 @@ class AppUser {
         name: j['name'] as String?,
         email: j['email'] as String?,
         role: j['role'] as String,
+        avatar: j['avatar'] as String?,
       );
 
-  Map<String, dynamic> toJson() => {'id': id, 'phone': phone, 'name': name, 'email': email, 'role': role};
+  Map<String, dynamic> toJson() =>
+      {'id': id, 'phone': phone, 'name': name, 'email': email, 'role': role, 'avatar': avatar};
 }
 
 /// Connexion par téléphone et code à usage unique.
@@ -51,6 +56,26 @@ class AuthApi {
       });
       final data = response.data!;
       return (token: data['token'] as String, user: AppUser.fromJson(data['user'] as Map<String, dynamic>));
+    } catch (e) {
+      throw ApiError.from(e);
+    }
+  }
+
+  /// Envoie une nouvelle photo de profil (fichier choisi sur l'appareil).
+  Future<AppUser> uploadAvatar(String path) async {
+    try {
+      final form = FormData.fromMap({'photo': await MultipartFile.fromFile(path)});
+      final response = await _dio.post<Map<String, dynamic>>('/auth/me/avatar', data: form);
+      return AppUser.fromJson(response.data!['data'] as Map<String, dynamic>);
+    } catch (e) {
+      throw ApiError.from(e);
+    }
+  }
+
+  Future<AppUser> removeAvatar() async {
+    try {
+      final response = await _dio.delete<Map<String, dynamic>>('/auth/me/avatar');
+      return AppUser.fromJson(response.data!['data'] as Map<String, dynamic>);
     } catch (e) {
       throw ApiError.from(e);
     }

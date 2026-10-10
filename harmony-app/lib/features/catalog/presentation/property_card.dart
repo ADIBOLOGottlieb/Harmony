@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/format/fcfa.dart';
+import '../../../core/format/money.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/harmony_image.dart';
 import '../../../core/widgets/status_badge.dart';
@@ -29,14 +30,19 @@ class PropertyCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final zone = ref.watch(zoneByIdProvider(apartment.zoneId));
-    final price = fcfa(apartment.pricePerNight);
+    final nightly = price(apartment.pricePerNight);
     // `container` : le bouton favori reste un nœud distinct pour les lecteurs
     // d'écran, au lieu d'être fusionné avec la carte (qui ouvrirait la fiche).
     return Semantics(
       container: true,
       button: true,
-      label: '${apartment.title}, ${apartment.type.label} à ${zone?.name ?? ''}. '
-          '${apartment.status.label}. $price par nuit.',
+      label: t('{title}, {type} à {zone}. {status}. {price} par nuit.', {
+        'title': apartment.title,
+        'type': apartment.type.label,
+        'zone': zone?.name ?? '',
+        'status': apartment.status.label,
+        'price': nightly,
+      }),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(HRadius.md),
@@ -98,8 +104,8 @@ class PropertyCard extends ConsumerWidget {
                   Text.rich(
                     TextSpan(
                       children: [
-                        TextSpan(text: price, style: HText.price.copyWith(fontSize: 18, color: context.cs.onSurface)),
-                        TextSpan(text: ' / nuit', style: context.tt.bodyMedium),
+                        TextSpan(text: nightly, style: HText.price.copyWith(fontSize: 18, color: context.cs.onSurface)),
+                        TextSpan(text: t(' / nuit'), style: context.tt.bodyMedium),
                       ],
                     ),
                   ),
@@ -127,7 +133,7 @@ class FavoriteButton extends ConsumerWidget {
       container: true,
       button: true,
       toggled: isFavorite,
-      label: isFavorite ? 'Retirer $title des favoris' : 'Ajouter $title aux favoris',
+      label: isFavorite ? t('Retirer {title} des favoris', {'title': title}) : t('Ajouter {title} aux favoris', {'title': title}),
       excludeSemantics: true,
       child: ClipOval(
         child: BackdropFilter(

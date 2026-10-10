@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/i18n/i18n.dart';
 
 import '../config/app_config.dart';
 import '../storage/storage.dart';
@@ -17,6 +18,8 @@ final apiClientProvider = Provider<Dio>((ref) {
     onRequest: (options, handler) async {
       final token = await ref.read(tokenStoreProvider).read();
       if (token != null) options.headers['Authorization'] = 'Bearer $token';
+      // Langue des messages et libellés renvoyés par l'API.
+      options.headers['Accept-Language'] = I18n.current.name;
       handler.next(options);
     },
   ));
@@ -51,23 +54,23 @@ class ApiError implements Exception {
       }
       final status = error.response?.statusCode;
       if (status == 401) {
-        return const ApiError('Votre session a expiré. Reconnectez-vous.', status: 401);
+        return ApiError(t('Votre session a expiré. Reconnectez-vous.'), status: 401);
       }
       if (status == 429) {
-        return const ApiError('Trop de tentatives. Patientez une minute avant de réessayer.', status: 429);
+        return ApiError(t('Trop de tentatives. Patientez une minute avant de réessayer.'), status: 429);
       }
       final offline = error.response == null;
       return ApiError(
         message ??
             (offline
-                ? 'Connexion impossible. Vérifiez votre accès à Internet puis réessayez.'
-                : 'Une erreur est survenue. Réessayez dans un instant.'),
+                ? t('Connexion impossible. Vérifiez votre accès à Internet puis réessayez.')
+                : t('Une erreur est survenue. Réessayez dans un instant.')),
         code: code,
         status: status,
         offline: offline,
       );
     }
-    return const ApiError('Une erreur est survenue. Réessayez dans un instant.');
+    return ApiError(t('Une erreur est survenue. Réessayez dans un instant.'));
   }
 
   @override

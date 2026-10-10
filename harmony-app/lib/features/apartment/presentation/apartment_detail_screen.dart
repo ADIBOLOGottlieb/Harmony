@@ -9,6 +9,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/contact/concierge.dart';
 import '../../../core/format/dates.dart';
 import '../../../core/format/fcfa.dart';
+import '../../../core/format/money.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/harmony_image.dart';
@@ -35,9 +37,9 @@ class ApartmentDetailScreen extends ConsumerWidget {
         appBar: AppBar(),
         body: EmptyState(
           icon: Icons.home_work_outlined,
-          title: 'Bien introuvable',
-          message: 'Ce logement n’est plus proposé à la location.',
-          actionLabel: 'Retour à l’accueil',
+          title: t('Bien introuvable'),
+          message: t('Ce logement n’est plus proposé à la location.'),
+          actionLabel: t('Retour à l’accueil'),
           onAction: () => context.go('/accueil'),
         ),
       );
@@ -65,7 +67,7 @@ class ApartmentDetailScreen extends ConsumerWidget {
                       Icon(Icons.star_rounded, size: HSize.icon, color: context.hc.accent),
                       const SizedBox(width: HSpace.xxs),
                       Text(
-                        '${a.rating.toStringAsFixed(1).replaceAll('.', ',')} · ${plural(a.reviewCount, 'avis', 'avis')}',
+                        '${a.rating.toStringAsFixed(1).replaceAll('.', I18n.current == AppLanguage.en ? '.' : ',')} · ${plural(a.reviewCount, 'avis', 'avis')}',
                         style: HText.labelSmall.copyWith(color: context.cs.onSurface),
                       ),
                       const SizedBox(width: HSpace.sm),
@@ -77,7 +79,7 @@ class ApartmentDetailScreen extends ConsumerWidget {
                   const _SectionDivider(),
                   Text(a.description, style: context.tt.bodyLarge),
                   const _SectionDivider(),
-                  _SectionTitle('Équipements'),
+                  _SectionTitle(t('Équipements')),
                   Wrap(
                     spacing: HSpace.xs,
                     runSpacing: HSpace.xs,
@@ -91,19 +93,19 @@ class ApartmentDetailScreen extends ConsumerWidget {
                   ),
                   if (a.shortStays != null) ...[
                     const _SectionDivider(),
-                    _SectionTitle('Séjours courts'),
-                    Text('Ce logement accepte aussi des séjours de quelques heures.', style: context.tt.bodyMedium),
+                    _SectionTitle(t('Séjours courts')),
+                    Text(t('Ce logement accepte aussi des séjours de quelques heures.'), style: context.tt.bodyMedium),
                     const SizedBox(height: HSpace.sm),
                     if (a.shortStays!.threeHours != null)
-                      _PriceLine(label: 'Créneau de 3 heures', amount: a.shortStays!.threeHours!),
-                    if (a.shortStays!.day != null) _PriceLine(label: 'Journée (sans nuitée)', amount: a.shortStays!.day!),
+                      _PriceLine(label: t('Créneau de 3 heures'), amount: a.shortStays!.threeHours!),
+                    if (a.shortStays!.day != null) _PriceLine(label: t('Journée (sans nuitée)'), amount: a.shortStays!.day!),
                   ],
                   const _SectionDivider(),
-                  _SectionTitle('Tarifs et caution'),
-                  _PriceLine(label: 'Prix par nuit', amount: a.pricePerNight),
-                  _PriceLine(label: 'Caution (restituée après l’état des lieux)', amount: a.deposit),
+                  _SectionTitle(t('Tarifs et caution')),
+                  _PriceLine(label: t('Prix par nuit'), amount: a.pricePerNight),
+                  _PriceLine(label: t('Caution (restituée après l’état des lieux)'), amount: a.deposit),
                   const _SectionDivider(),
-                  _SectionTitle('Règlement'),
+                  _SectionTitle(t('Règlement')),
                   for (final rule in a.rules)
                     Padding(
                       padding: const EdgeInsets.only(bottom: HSpace.xs),
@@ -120,13 +122,13 @@ class ApartmentDetailScreen extends ConsumerWidget {
                       ),
                     ),
                   const _SectionDivider(),
-                  _SectionTitle('Localisation'),
+                  _SectionTitle(t('Localisation')),
                   _LocationCard(apartment: a, zoneName: zone?.name),
                   const _SectionDivider(),
-                  _SectionTitle('Avis'),
+                  _SectionTitle(t('Avis')),
                   _ReviewsSummary(apartment: a),
                   const _SectionDivider(),
-                  _SectionTitle('Votre concierge'),
+                  _SectionTitle(t('Votre concierge')),
                   const _ConciergeCard(),
                   const SizedBox(height: HSize.bookingBar + HSpace.xl),
                 ],
@@ -165,7 +167,7 @@ class _GalleryState extends State<_Gallery> {
             itemCount: a.photos.length,
             onPageChanged: (i) => setState(() => _page = i),
             itemBuilder: (context, i) {
-              final image = HarmonyImage(a.photos[i], semanticLabel: 'Photo ${i + 1} sur ${a.photos.length} de ${a.title}');
+              final image = HarmonyImage(a.photos[i], semanticLabel: t('Photo {n} sur {total} de {title}', {'n': i + 1, 'total': a.photos.length, 'title': a.title}));
               return i == 0 ? Hero(tag: a.heroTag, child: image) : image;
             },
           ),
@@ -189,7 +191,7 @@ class _GalleryState extends State<_Gallery> {
                 children: [
                   _GlassButton(
                     icon: Icons.arrow_back_rounded,
-                    tooltip: 'Retour',
+                    tooltip: t('Retour'),
                     onTap: () => context.canPop() ? context.pop() : context.go('/accueil'),
                   ),
                   const Spacer(),
@@ -207,7 +209,7 @@ class _GalleryState extends State<_Gallery> {
               child: Text(
                 '${_page + 1} / ${a.photos.length}',
                 style: HText.labelSmall.copyWith(color: HPalette.white),
-                semanticsLabel: 'Photo ${_page + 1} sur ${a.photos.length}',
+                semanticsLabel: t('Photo {n} sur {total}', {'n': _page + 1, 'total': a.photos.length}),
               ),
             ),
           ),
@@ -299,7 +301,7 @@ class _LocationCard extends StatelessWidget {
     });
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Impossible d’ouvrir la carte.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('Impossible d’ouvrir la carte.'))));
     }
   }
 
@@ -335,14 +337,14 @@ class _LocationCard extends StatelessWidget {
             LocationMap(latitude: apartment.latitude, longitude: apartment.longitude),
             const SizedBox(height: HSpace.sm),
             Text(
-              'L’adresse exacte et l’itinéraire détaillé vous sont communiqués après confirmation de la réservation.',
+              t('L’adresse exacte et l’itinéraire détaillé vous sont communiqués après confirmation de la réservation.'),
               style: context.tt.bodyMedium,
             ),
             const SizedBox(height: HSpace.sm),
             OutlinedButton.icon(
               onPressed: () => _openMaps(context),
               icon: const Icon(Icons.map_outlined),
-              label: const Text('Voir le quartier sur la carte'),
+              label: Text(t('Voir le quartier sur la carte')),
             ),
           ],
         ),
@@ -381,7 +383,7 @@ class _ReviewsSummary extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: HSpace.xxs),
-                  Text('${plural(apartment.reviewCount, 'avis', 'avis')} de voyageurs après leur séjour', style: context.tt.bodyMedium),
+                  Text(t('{count} de voyageurs après leur séjour', {'count': plural(apartment.reviewCount, 'avis', 'avis')}), style: context.tt.bodyMedium),
                 ],
               ),
             ),
@@ -403,7 +405,7 @@ class _ConciergeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Une question avant de réserver ? Notre concierge vous répond 7 j/7.', style: context.tt.bodyLarge),
+            Text(t('Une question avant de réserver ? Notre concierge vous répond 7 j/7.'), style: context.tt.bodyLarge),
             const SizedBox(height: HSpace.md),
             Row(
               children: [
@@ -411,7 +413,7 @@ class _ConciergeCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: () => contactConcierge(context, whatsapp: false),
                     icon: const Icon(Icons.call_outlined),
-                    label: const Text('Appeler'),
+                    label: Text(t('Appeler')),
                   ),
                 ),
                 const SizedBox(width: HSpace.sm),
@@ -419,7 +421,7 @@ class _ConciergeCard extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: () => contactConcierge(context, whatsapp: true),
                     icon: const Icon(Icons.chat_outlined),
-                    label: const Text('WhatsApp'),
+                    label: Text('WhatsApp'),
                   ),
                 ),
               ],
@@ -442,8 +444,8 @@ class _BookingBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final nights = dates == null ? 0 : nightsIn(dates!);
     final subtitle = nights > 0
-        ? '${plural(nights, 'nuit')} · ${fcfa(apartment.pricePerNight * nights)}'
-        : 'par nuit · caution ${fcfa(apartment.deposit)}';
+        ? '${plural(nights, 'nuit')} · ${price(apartment.pricePerNight * nights)}'
+        : t('par nuit · caution {amount}', {'amount': price(apartment.deposit)});
     return DecoratedBox(
       decoration: BoxDecoration(
         color: context.cs.surfaceContainerLowest,
@@ -473,7 +475,7 @@ class _BookingBar extends StatelessWidget {
                         context.push('/bien/${apartment.id}/reserver');
                       }
                     : null,
-                child: Text(apartment.isBookable ? 'Réserver' : apartment.status.label),
+                child: Text(apartment.isBookable ? t('Réserver') : apartment.status.label),
               ),
             ],
           ),

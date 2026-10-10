@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/format/dates.dart';
+import '../../../core/i18n/i18n.dart';
 
 import '../../../core/theme/design_tokens.dart';
 import '../domain/apartment.dart';
@@ -45,10 +47,10 @@ class SpecRow extends StatelessWidget {
       spacing: HSpace.md,
       runSpacing: HSpace.xxs,
       children: [
-        item(Icons.bed_outlined, '${apartment.bedrooms} ch.', '${apartment.bedrooms} chambres'),
-        item(Icons.bathtub_outlined, '${apartment.bathrooms} sdb', '${apartment.bathrooms} salles de bain'),
-        item(Icons.square_foot_rounded, '${apartment.surfaceM2} m²', '${apartment.surfaceM2} mètres carrés'),
-        item(Icons.people_outline_rounded, '${apartment.capacity}', '${apartment.capacity} voyageurs maximum'),
+        item(Icons.bed_outlined, t('{n} ch.', {'n': apartment.bedrooms}), plural(apartment.bedrooms, 'chambre')),
+        item(Icons.bathtub_outlined, t('{n} sdb', {'n': apartment.bathrooms}), plural(apartment.bathrooms, 'salle de bain', 'salles de bain')),
+        item(Icons.square_foot_rounded, '${apartment.surfaceM2} m²', t('{n} mètres carrés', {'n': apartment.surfaceM2})),
+        item(Icons.people_outline_rounded, '${apartment.capacity}', t('{n} voyageurs maximum', {'n': apartment.capacity})),
       ],
     );
   }

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/motion/motion.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/harmony_image.dart';
@@ -13,6 +14,7 @@ import '../../../core/widgets/section_header.dart';
 import '../../catalog/application/search_criteria.dart';
 import '../../catalog/data/catalog_repository.dart';
 import '../../catalog/presentation/property_card.dart';
+import '../../gallery/presentation/gallery_teaser.dart';
 import 'search_panel.dart';
 import 'zone_card.dart';
 
@@ -84,12 +86,12 @@ class HomeScreen extends ConsumerWidget {
                                 ),
                                 const Spacer(),
                                 Text(
-                                  'CONCIERGERIE IMMOBILIÈRE · LOMÉ',
+                                  t('CONCIERGERIE IMMOBILIÈRE · LOMÉ'),
                                   style: HText.overline.copyWith(color: HPalette.champagneSoft),
                                 ),
                                 const SizedBox(height: HSpace.xs),
                                 Text(
-                                  'Votre adresse\nd’exception à Lomé',
+                                  t('Votre adresse\nd’exception à Lomé'),
                                   style: HText.display.copyWith(color: HPalette.white, fontSize: 30),
                                 ),
                               ],
@@ -113,9 +115,9 @@ class HomeScreen extends ConsumerWidget {
             SliverToBoxAdapter(
               child: reveal(
                 SectionHeader(
-                  overline: 'Sélection',
-                  title: 'Appartements à la une',
-                  actionLabel: 'Tout voir',
+                  overline: t('Sélection'),
+                  title: t('Appartements à la une'),
+                  actionLabel: t('Tout voir'),
                   onAction: () {
                     ref.read(searchCriteriaProvider.notifier).reset();
                     context.go('/explorer');
@@ -140,7 +142,7 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: HSpace.lg)),
-            const SliverToBoxAdapter(child: SectionHeader(overline: 'Quartiers', title: 'Par zone')),
+            SliverToBoxAdapter(child: SectionHeader(overline: t('Quartiers'), title: t('Par zone'))),
             SliverToBoxAdapter(
               child: SizedBox(
                 height: HSize.zoneCardHeight + HSpace.md * 2,
@@ -161,7 +163,9 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: HSpace.md)),
-            const SliverToBoxAdapter(child: SectionHeader(overline: 'Récemment ajoutés', title: 'Nouveautés')),
+            const SliverToBoxAdapter(child: GalleryTeaser()),
+            const SliverToBoxAdapter(child: SizedBox(height: HSpace.md)),
+            SliverToBoxAdapter(child: SectionHeader(overline: t('Récemment ajoutés'), title: t('Nouveautés'))),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(HSpace.gutter, HSpace.md, HSpace.gutter, HSpace.lg),
               sliver: SliverList.separated(
@@ -171,7 +175,7 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
             if (AppConfig.salesSectionEnabled)
-              const SliverToBoxAdapter(child: SectionHeader(overline: 'Bientôt', title: 'À vendre et programmes neufs')),
+              SliverToBoxAdapter(child: SectionHeader(overline: t('Bientôt'), title: t('À vendre et programmes neufs'))),
             const SliverToBoxAdapter(child: SizedBox(height: HSpace.lg)),
           ],
         ),
@@ -190,7 +194,7 @@ class _OfflinePill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Hors connexion, catalogue enregistré. Toucher pour réessayer.',
+      label: t('Hors connexion, catalogue enregistré. Toucher pour réessayer.'),
       excludeSemantics: true,
       child: Material(
         color: HPalette.photoGlass,
@@ -210,7 +214,7 @@ class _OfflinePill extends StatelessWidget {
                 children: [
                   const Icon(Icons.cloud_off_outlined, size: HSize.iconSm, color: HPalette.white),
                   const SizedBox(width: HSpace.xxs),
-                  Text('Hors connexion', style: HText.labelSmall.copyWith(color: HPalette.white)),
+                  Text(t('Hors connexion'), style: HText.labelSmall.copyWith(color: HPalette.white)),
                 ],
               ),
             ),

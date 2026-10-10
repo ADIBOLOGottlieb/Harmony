@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format/fcfa.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/harmony_sheet.dart';
 import '../application/search_criteria.dart';
@@ -12,7 +13,7 @@ import '../domain/apartment.dart';
 Future<void> showFiltersSheet(BuildContext context) {
   return showHarmonySheet<void>(
     context,
-    title: 'Filtres',
+    title: t('Filtres'),
     builder: (_) => const _FiltersBody(),
   );
 }
@@ -38,7 +39,7 @@ class _FiltersBodyState extends ConsumerState<_FiltersBody> {
     _amenities = {...c.amenities};
   }
 
-  String _label(double v) => v >= budgetCeiling ? '${fcfa(budgetCeiling)} et +' : fcfa(v.round());
+  String _label(double v) => v >= budgetCeiling ? t('{amount} et +', {'amount': fcfa(budgetCeiling)}) : fcfa(v.round());
 
   void _apply() {
     HapticFeedback.selectionClick();
@@ -58,7 +59,7 @@ class _FiltersBodyState extends ConsumerState<_FiltersBody> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Budget par nuit', style: context.tt.titleMedium),
+          Text(t('Budget par nuit'), style: context.tt.titleMedium),
           Semantics(
             liveRegion: true,
             child: Text('${_label(_budget.start)} – ${_label(_budget.end)}', style: context.tt.bodyMedium),
@@ -72,7 +73,7 @@ class _FiltersBodyState extends ConsumerState<_FiltersBody> {
             onChanged: (v) => setState(() => _budget = v),
           ),
           const SizedBox(height: HSpace.md),
-          Text('Équipements', style: context.tt.titleMedium),
+          Text(t('Équipements'), style: context.tt.titleMedium),
           const SizedBox(height: HSpace.xs),
           Wrap(
             spacing: HSpace.xs,
@@ -94,10 +95,10 @@ class _FiltersBodyState extends ConsumerState<_FiltersBody> {
                   _budget = RangeValues(budgetFloor.toDouble(), budgetCeiling.toDouble());
                   _amenities.clear();
                 }),
-                child: const Text('Effacer'),
+                child: Text(t('Effacer')),
               ),
               const SizedBox(width: HSpace.sm),
-              Expanded(child: FilledButton(onPressed: _apply, child: const Text('Appliquer'))),
+              Expanded(child: FilledButton(onPressed: _apply, child: Text(t('Appliquer')))),
             ],
           ),
         ],

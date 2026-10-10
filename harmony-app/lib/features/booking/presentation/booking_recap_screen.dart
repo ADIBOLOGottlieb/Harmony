@@ -6,6 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/format/dates.dart';
 import '../../../core/format/fcfa.dart';
+import '../../../core/format/money.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../auth/application/session.dart';
@@ -62,12 +64,12 @@ class _BookingRecapScreenState extends ConsumerState<BookingRecapScreen> {
     final draft = ref.watch(bookingDraftProvider);
     final apartment = ref.watch(apartmentByIdProvider(widget.apartmentId));
     if (draft == null || apartment == null || !draft.isComplete) {
-      return Scaffold(appBar: AppBar(), body: const Center(child: Text('Choisissez d’abord vos dates.')));
+      return Scaffold(appBar: AppBar(), body: Center(child: Text(t('Choisissez d’abord vos dates.'))));
     }
     final quote = ref.watch(quoteProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Récapitulatif')),
+      appBar: AppBar(title: Text(t('Récapitulatif'))),
       body: quote.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
@@ -78,7 +80,7 @@ class _BookingRecapScreenState extends ConsumerState<BookingRecapScreen> {
               children: [
                 Text(ApiError.from(e).message, textAlign: TextAlign.center, style: context.tt.bodyLarge),
                 const SizedBox(height: HSpace.md),
-                OutlinedButton(onPressed: () => ref.invalidate(quoteProvider), child: const Text('Réessayer')),
+                OutlinedButton(onPressed: () => ref.invalidate(quoteProvider), child: Text(t('Réessayer'))),
               ],
             ),
           ),
@@ -88,31 +90,36 @@ class _BookingRecapScreenState extends ConsumerState<BookingRecapScreen> {
           children: [
             Text(apartment.title, style: context.tt.headlineMedium),
             const SizedBox(height: HSpace.md),
-            _Row(icon: Icons.login_rounded, label: 'Arrivée', value: '${fullDate(q.startAt)} · ${timeOfDay(q.startAt)}'),
-            _Row(icon: Icons.logout_rounded, label: 'Départ', value: '${fullDate(q.endAt)} · ${timeOfDay(q.endAt)}'),
-            _Row(icon: Icons.people_outline_rounded, label: 'Voyageurs', value: '${draft.guests}'),
+            _Row(icon: Icons.login_rounded, label: t('Arrivée'), value: '${fullDate(q.startAt)} · ${timeOfDay(q.startAt)}'),
+            _Row(icon: Icons.logout_rounded, label: t('Départ'), value: '${fullDate(q.endAt)} · ${timeOfDay(q.endAt)}'),
+            _Row(icon: Icons.people_outline_rounded, label: t('Voyageurs'), value: '${draft.guests}'),
             const Padding(padding: EdgeInsets.symmetric(vertical: HSpace.md), child: Divider()),
             for (final line in q.lines) _Amount(label: line.label, amount: line.amount),
             const SizedBox(height: HSpace.xs),
-            _Amount(label: 'Total du séjour', amount: q.total, strong: true),
+            _Amount(label: t('Total du séjour'), amount: q.total, strong: true),
+            if (Money.current != DisplayCurrency.xof)
+              Text(
+                t('Soit {amount} environ. Le paiement se fait en FCFA.', {'amount': converted(q.total, Money.current)}),
+                style: context.tt.bodyMedium,
+              ),
             const SizedBox(height: HSpace.md),
             Container(
               padding: const EdgeInsets.all(HSpace.md),
               decoration: BoxDecoration(color: context.hc.accentSoft, borderRadius: BorderRadius.circular(HRadius.md)),
               child: Column(
                 children: [
-                  _Amount(label: q.balance > 0 ? 'Acompte à payer maintenant' : 'À payer maintenant', amount: q.advance, strong: true),
-                  if (q.balance > 0) _Amount(label: 'Solde avant l’arrivée', amount: q.balance),
+                  _Amount(label: q.balance > 0 ? t('Acompte à payer maintenant') : t('À payer maintenant'), amount: q.advance, strong: true),
+                  if (q.balance > 0) _Amount(label: t('Solde avant l’arrivée'), amount: q.balance),
                 ],
               ),
             ),
             const SizedBox(height: HSpace.sm),
             Text(
-              'Caution de ${fcfa(q.securityDeposit)} réglée à l’arrivée auprès du concierge et restituée après l’état des lieux.',
+              t('Caution de {amount} réglée à l’arrivée auprès du concierge et restituée après l’état des lieux.', {'amount': fcfa(q.securityDeposit)}),
               style: context.tt.bodyMedium,
             ),
             const SizedBox(height: HSpace.lg),
-            Text('Moyen de paiement', style: context.tt.titleLarge),
+            Text(t('Moyen de paiement'), style: context.tt.titleLarge),
             const SizedBox(height: HSpace.xs),
             for (final m in PaymentMethod.values)
               _MethodTile(
@@ -122,8 +129,7 @@ class _BookingRecapScreenState extends ConsumerState<BookingRecapScreen> {
               ),
             const SizedBox(height: HSpace.md),
             Text(
-              'Annulation gratuite jusqu’à 5 jours avant l’arrivée : l’acompte vous est alors remboursé. '
-              'Au-delà, l’acompte reste acquis.',
+              t('Annulation gratuite jusqu’à 5 jours avant l’arrivée : l’acompte vous est alors remboursé. Au-delà, l’acompte reste acquis.'),
               style: context.tt.bodyMedium,
             ),
           ],
@@ -160,8 +166,8 @@ class _BookingRecapScreenState extends ConsumerState<BookingRecapScreen> {
                                 child: CircularProgressIndicator(strokeWidth: 2, color: context.cs.onPrimary),
                               )
                             : Text(draft.paymentMethod == PaymentMethod.bankTransfer
-                                ? 'Réserver et payer par virement'
-                                : 'Payer ${fcfa(quote.requireValue.advance)}'),
+                                ? t('Réserver et payer par virement')
+                                : t('Payer {amount}', {'amount': fcfa(quote.requireValue.advance)})),
                       ),
                     ],
                   ),

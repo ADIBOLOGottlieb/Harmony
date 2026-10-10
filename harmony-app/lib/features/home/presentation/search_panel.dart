@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format/dates.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../catalog/application/search_criteria.dart';
 import '../../catalog/data/catalog_repository.dart';
@@ -31,8 +32,8 @@ class SearchPanel extends ConsumerWidget {
           children: [
             _Field(
               icon: Icons.place_outlined,
-              label: 'Destination',
-              value: zone?.name ?? 'Toutes les zones de Lomé',
+              label: t('Destination'),
+              value: zone?.name ?? t('Toutes les zones de Lomé'),
               onTap: () => pickZone(context, ref),
             ),
             const Divider(indent: HSpace.xxl + HSpace.xs),
@@ -41,7 +42,7 @@ class SearchPanel extends ConsumerWidget {
                 Expanded(
                   child: _Field(
                     icon: Icons.calendar_today_outlined,
-                    label: 'Dates',
+                    label: t('Dates'),
                     value: c.dates == null ? 'Choisir' : dateRangeLabel(c.dates!),
                     onTap: () => pickDates(context, ref),
                   ),
@@ -50,7 +51,7 @@ class SearchPanel extends ConsumerWidget {
                 Expanded(
                   child: _Field(
                     icon: Icons.people_outline_rounded,
-                    label: 'Voyageurs',
+                    label: t('Voyageurs'),
                     value: plural(c.guests, 'voyageur'),
                     onTap: () => pickGuests(context, ref),
                   ),
@@ -61,7 +62,7 @@ class SearchPanel extends ConsumerWidget {
             FilledButton.icon(
               onPressed: onSearch,
               icon: const Icon(Icons.search_rounded),
-              label: const Text('Rechercher'),
+              label: Text(t('Rechercher')),
             ),
           ],
         ),

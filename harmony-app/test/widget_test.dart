@@ -1,20 +1,26 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:harmony_app/app.dart';
 import 'package:harmony_app/core/format/dates.dart';
 import 'package:harmony_app/core/format/fcfa.dart';
+import 'package:harmony_app/core/format/money.dart';
+import 'package:harmony_app/core/i18n/i18n.dart';
 import 'package:harmony_app/core/network/api_client.dart';
 import 'package:harmony_app/core/router/app_router.dart';
 import 'package:harmony_app/core/storage/storage.dart';
 import 'package:harmony_app/core/widgets/location_map.dart';
 import 'package:harmony_app/features/auth/application/session.dart';
+import 'package:harmony_app/features/auth/data/auth_api.dart';
 import 'package:harmony_app/features/booking/application/booking_draft.dart';
 import 'package:harmony_app/features/catalog/application/favorites.dart';
 import 'package:harmony_app/features/catalog/application/search_criteria.dart';
 import 'package:harmony_app/features/catalog/domain/apartment.dart';
+import 'package:harmony_app/features/profile/application/preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/fake_api.dart';
@@ -49,7 +55,8 @@ Future<ProviderContainer> _launch(
     if (signedIn) 'session.user.v1': jsonEncode(userJson()),
   });
   final preferences = await SharedPreferences.getInstance();
-  final container = ProviderContainer(overrides: [
+  // Pas de nouvelle tentative automatique (Riverpod) : l'API factice répond de façon déterministe.
+  final container = ProviderContainer(retry: (_, _) => null, overrides: [
     preferencesProvider.overrideWithValue(preferences),
     apiClientProvider.overrideWithValue((api ?? FakeApi()).dio()),
     tokenStoreProvider.overrideWithValue(store),
@@ -375,6 +382,97 @@ void main() {
       expect(api.last('POST /bookings/HH-TEST01/review')!.data, {'rating': 4});
       expect(find.text('Merci pour votre avis'), findsOneWidget);
       expect(find.text('Donner mon avis'), findsNothing);
+    });
+  });
+
+  group('Galerie, langue, devise et photo', () {
+    tearDown(() {
+      I18n.current = AppLanguage.fr;
+      Money.current = DisplayCurrency.xof;
+    });
+
+    testWidgets('découvrir la galerie depuis l’accueil et réserver une œuvre', (tester) async {
+      final api = FakeApi({
+        'GET /gallery/artworks': (_) => {
+              'data': [artworkJson(), artworkJson(slug: 'kente-du-matin', status: 'sold')],
+            },
+        'GET /gallery/artworks/rythmes': (_) => {'data': artworkJson()},
+        'POST /gallery/artworks/rythmes/orders': (_) => FakeReply(201, {'data': artworkOrderJson()}),
+        'GET /gallery/orders': (_) => {
+              'data': [artworkOrderJson()],
+            },
+      });
+      await _launch(tester, api: api, signedIn: true);
+
+      await tester.scrollUntilVisible(find.text('Découvrir'), 300, scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text('Découvrir'));
+      await tester.pumpAndSettle();
+      expect(find.text('La galerie'), findsOneWidget);
+      expect(find.text('Kente du matin'), findsOneWidget);
+      expect(find.text('Vendue'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilterChip, 'Disponibles'));
+      await tester.pumpAndSettle();
+      expect(find.text('Kente du matin'), findsNothing);
+
+      await tester.tap(find.text('Rythmes'));
+      await tester.pumpAndSettle();
+      expect(find.text('Encre de Chine sur papier coton'), findsOneWidget);
+
+      await tester.tap(find.text('Acquérir cette œuvre'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Réserver l’œuvre'));
+      await tester.pumpAndSettle();
+
+      expect(api.last('POST /gallery/artworks/rythmes/orders')!.data, {'delivery_method': 'pickup'});
+      expect(find.text('Mes acquisitions'), findsOneWidget);
+      expect(find.textContaining('GA-TEST01'), findsOneWidget);
+    });
+
+    testWidgets('l’interface passe en anglais depuis le profil', (tester) async {
+      final container = await _launch(tester);
+      await tester.tap(_tab('Profil'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('English'));
+      await tester.pumpAndSettle();
+
+      expect(container.read(languageProvider), AppLanguage.en);
+      expect(find.descendant(of: find.byType(AppBar), matching: find.text('Profile')), findsOneWidget);
+      expect(_tab('Home'), findsOneWidget);
+      expect(_tab('Bookings'), findsOneWidget);
+      expect(container.read(preferencesProvider).getString('prefs.language.v1'), 'en');
+    });
+
+    testWidgets('les prix s’affichent dans la devise choisie', (tester) async {
+      await _launch(tester);
+      await tester.tap(_tab('Profil'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('EUR'));
+      await tester.pumpAndSettle();
+      expect(find.text('Prix convertis à titre indicatif : les paiements restent en FCFA.'), findsOneWidget);
+
+      await tester.tap(_tab('Accueil'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('€'), findsWidgets);
+      expect(find.textContaining('FCFA'), findsNothing);
+    });
+
+    test('la photo de profil est envoyée en multipart', () async {
+      final dir = await Directory.systemTemp.createTemp('avatar');
+      final file = File('${dir.path}/photo.jpg')..writeAsBytesSync(List.filled(64, 1));
+      addTearDown(() => dir.delete(recursive: true));
+      final api = FakeApi({
+        'POST /auth/me/avatar': (_) => {
+              'data': {...userJson(), 'avatar': 'https://media.test/avatars/photo.jpg'},
+            },
+      });
+
+      final user = await AuthApi(api.dio()).uploadAvatar(file.path);
+
+      expect(user.avatar, 'https://media.test/avatars/photo.jpg');
+      final form = api.last('POST /auth/me/avatar')!.data as FormData;
+      expect(form.files.single.key, 'photo');
     });
   });
 }

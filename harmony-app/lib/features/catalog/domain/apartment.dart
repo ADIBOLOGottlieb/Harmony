@@ -1,3 +1,5 @@
+import '../../../core/i18n/i18n.dart';
+
 /// Types de biens proposés à la location. `code` : valeur échangée avec l'API.
 enum ApartmentType {
   studio('Studio', 'studio'),
@@ -7,8 +9,9 @@ enum ApartmentType {
   duplex('Duplex', 'duplex'),
   villa('Villa', 'villa');
 
-  const ApartmentType(this.label, this.code);
-  final String label;
+  const ApartmentType(this._label, this.code);
+  final String _label;
+  String get label => t(_label);
   final String code;
 
   static ApartmentType fromCode(String code) => values.firstWhere((t) => t.code == code, orElse: () => twoRooms);
@@ -27,8 +30,9 @@ enum Amenity {
   security('Gardiennage 24 h/24', 'security'),
   washer('Lave-linge', 'washer');
 
-  const Amenity(this.label, this.code);
-  final String label;
+  const Amenity(this._label, this.code);
+  final String _label;
+  String get label => t(_label);
   final String code;
 
   static Amenity? fromCode(String code) {
@@ -44,8 +48,9 @@ enum ApartmentStatus {
   occupied('Réservé', 'occupied'),
   maintenance('En maintenance', 'maintenance');
 
-  const ApartmentStatus(this.label, this.code);
-  final String label;
+  const ApartmentStatus(this._label, this.code);
+  final String _label;
+  String get label => t(_label);
   final String code;
 
   static ApartmentStatus fromCode(String code) => values.firstWhere((s) => s.code == code, orElse: () => available);

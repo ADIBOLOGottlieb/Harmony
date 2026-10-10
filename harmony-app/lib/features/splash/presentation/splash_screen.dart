@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/motion/motion.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/harmony_logo.dart';
@@ -49,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       backgroundColor: HPalette.navy,
       body: Semantics(
         button: true,
-        label: 'HARMONY HOME. Toucher pour continuer',
+        label: t('HARMONY HOME. Toucher pour continuer'),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
@@ -59,25 +60,25 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: AnimatedBuilder(
             animation: _c,
             builder: (context, _) {
-              final t = reduceMotion(context) ? 1.0 : _c.value;
+              final progress = reduceMotion(context) ? 1.0 : _c.value;
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    HarmonyMark(size: 92, progress: _interval(t, 0, .6), color: HPalette.champagne),
+                    HarmonyMark(size: 92, progress: _interval(progress, 0, .6), color: HPalette.champagne),
                     const SizedBox(height: HSpace.lg),
                     Opacity(
-                      opacity: _interval(t, .45, .8),
+                      opacity: _interval(progress, .45, .8),
                       child: Transform.translate(
-                        offset: Offset(0, 12 * (1 - _interval(t, .45, .8))),
+                        offset: Offset(0, 12 * (1 - _interval(progress, .45, .8))),
                         child: const HarmonyWordmark(scale: 1.4, color: HPalette.ivory, accentColor: HPalette.champagne),
                       ),
                     ),
                     const SizedBox(height: HSpace.md),
                     Opacity(
-                      opacity: _interval(t, .65, .95),
+                      opacity: _interval(progress, .65, .95),
                       child: Text(
-                        'Conciergerie immobilière · Lomé',
+                        t('Conciergerie immobilière · Lomé'),
                         style: HText.bodySmall.copyWith(color: HPalette.champagneSoft),
                       ),
                     ),

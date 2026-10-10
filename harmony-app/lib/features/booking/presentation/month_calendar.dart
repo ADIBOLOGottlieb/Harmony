@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/i18n/i18n.dart';
 
 import '../../../core/format/dates.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -95,10 +96,10 @@ class _DayCell extends StatelessWidget {
     final unavailable = status != DayStatus.free;
     final selected = isStart || isEnd;
     final label = switch (status) {
-      DayStatus.free => 'libre',
-      DayStatus.booked => 'réservé',
-      DayStatus.blocked => 'indisponible',
-      DayStatus.past => 'passé',
+      DayStatus.free => t('libre'),
+      DayStatus.booked => t('réservé'),
+      DayStatus.blocked => t('indisponible'),
+      DayStatus.past => t('passé'),
     };
 
     final textColor = selected

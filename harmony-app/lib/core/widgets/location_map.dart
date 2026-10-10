@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+import '../../core/i18n/i18n.dart';
 
 import '../config/app_config.dart';
 import '../theme/design_tokens.dart';
@@ -23,7 +24,7 @@ class LocationMap extends ConsumerWidget {
     final center = LatLng(latitude, longitude);
     final tiles = ref.watch(mapTilesEnabledProvider);
     return Semantics(
-      label: exact ? 'Carte : emplacement du logement' : 'Carte : quartier du logement',
+      label: exact ? t('Carte : emplacement du logement') : t('Carte : quartier du logement'),
       image: true,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(HRadius.md),

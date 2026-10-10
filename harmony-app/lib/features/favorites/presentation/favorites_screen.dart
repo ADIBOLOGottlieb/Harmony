@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../catalog/application/favorites.dart';
@@ -16,13 +17,13 @@ class FavoritesScreen extends ConsumerWidget {
     final ids = ref.watch(favoritesProvider);
     final items = ref.watch(apartmentsProvider).where((a) => ids.contains(a.id)).toList();
     return Scaffold(
-      appBar: AppBar(title: const Text('Favoris')),
+      appBar: AppBar(title: Text(t('Favoris'))),
       body: items.isEmpty
           ? EmptyState(
               icon: Icons.favorite_border_rounded,
-              title: 'Aucun favori',
-              message: 'Touchez le cœur d’un bien pour le retrouver ici et comparer vos coups de cœur.',
-              actionLabel: 'Explorer les biens',
+              title: t('Aucun favori'),
+              message: t('Touchez le cœur d’un bien pour le retrouver ici et comparer vos coups de cœur.'),
+              actionLabel: t('Explorer les biens'),
               onAction: () => context.go('/explorer'),
             )
           : ListView.separated(

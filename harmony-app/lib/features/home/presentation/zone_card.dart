@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/format/dates.dart';
 
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/harmony_image.dart';
@@ -16,7 +17,7 @@ class ZoneCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: '${zone.name}, $count bien${count > 1 ? 's' : ''}',
+      label: '${zone.name}, ${plural(count, 'bien')}',
       excludeSemantics: true,
       child: SizedBox(
         width: HSize.zoneCardWidth,

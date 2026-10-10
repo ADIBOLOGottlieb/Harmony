@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/format/dates.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/empty_state.dart';
@@ -22,13 +23,13 @@ class BookingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Réservations')),
+      appBar: AppBar(title: Text(t('Réservations'))),
       body: session == null
           ? EmptyState(
               icon: Icons.lock_outline_rounded,
-              title: 'Connectez-vous pour voir vos séjours',
-              message: 'Vos réservations, leurs reçus et le contact de votre concierge sont liés à votre numéro de téléphone.',
-              actionLabel: 'Se connecter',
+              title: t('Connectez-vous pour voir vos séjours'),
+              message: t('Vos réservations, leurs reçus et le contact de votre concierge sont liés à votre numéro de téléphone.'),
+              actionLabel: t('Se connecter'),
               onAction: () => context.push('/connexion'),
             )
           : ref.watch(myBookingsProvider).when(
@@ -49,18 +50,18 @@ class BookingsScreen extends ConsumerWidget {
                   }
                   return EmptyState(
                     icon: error.offline ? Icons.cloud_off_outlined : Icons.error_outline_rounded,
-                    title: error.offline ? 'Hors connexion' : 'Impossible de charger vos réservations',
+                    title: error.offline ? t('Hors connexion') : t('Impossible de charger vos réservations'),
                     message: error.message,
-                    actionLabel: 'Réessayer',
+                    actionLabel: t('Réessayer'),
                     onAction: () => ref.invalidate(myBookingsProvider),
                   );
                 },
                 data: (bookings) => bookings.isEmpty
                     ? EmptyState(
                         icon: Icons.event_available_outlined,
-                        title: 'Aucune réservation pour l’instant',
-                        message: 'Vos séjours apparaîtront ici, avec leur reçu et le contact de votre concierge.',
-                        actionLabel: 'Explorer les biens',
+                        title: t('Aucune réservation pour l’instant'),
+                        message: t('Vos séjours apparaîtront ici, avec leur reçu et le contact de votre concierge.'),
+                        actionLabel: t('Explorer les biens'),
                         onAction: () => context.go('/explorer'),
                       )
                     : RefreshIndicator(
@@ -87,7 +88,12 @@ class _BookingTile extends StatelessWidget {
     final cover = photoSource(booking.apartmentCover);
     return Semantics(
       button: true,
-      label: '${booking.apartmentTitle}, ${booking.statusLabel}, du ${fullDate(booking.startAt)} au ${fullDate(booking.endAt)}',
+      label: t('{title}, {status}, du {from} au {to}', {
+        'title': booking.apartmentTitle,
+        'status': booking.statusLabel,
+        'from': fullDate(booking.startAt),
+        'to': fullDate(booking.endAt),
+      }),
       excludeSemantics: true,
       child: Card(
         clipBehavior: Clip.antiAlias,

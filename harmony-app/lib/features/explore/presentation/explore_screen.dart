@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/format/dates.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../catalog/application/search_criteria.dart';
@@ -26,10 +27,10 @@ class ExploreScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Explorer'),
+        title: Text(t('Explorer')),
         actions: [
           if (!criteria.isEmpty)
-            TextButton(onPressed: notifier.reset, child: const Text('Réinitialiser')),
+            TextButton(onPressed: notifier.reset, child: Text(t('Réinitialiser'))),
           const SizedBox(width: HSpace.xs),
         ],
       ),
@@ -44,19 +45,19 @@ class ExploreScreen extends ConsumerWidget {
               children: [
                 _CriteriaChip(
                   icon: Icons.tune_rounded,
-                  label: criteria.advancedCount == 0 ? 'Filtres' : 'Filtres · ${criteria.advancedCount}',
+                  label: criteria.advancedCount == 0 ? t('Filtres') : '${t('Filtres')} · ${criteria.advancedCount}',
                   active: criteria.advancedCount > 0,
                   onTap: () => showFiltersSheet(context),
                 ),
                 _CriteriaChip(
                   icon: Icons.place_outlined,
-                  label: zone?.name ?? 'Toutes les zones',
+                  label: zone?.name ?? t('Toutes les zones'),
                   active: zone != null,
                   onTap: () => pickZone(context, ref),
                 ),
                 _CriteriaChip(
                   icon: Icons.calendar_today_outlined,
-                  label: criteria.dates == null ? 'Dates' : dateRangeLabel(criteria.dates!),
+                  label: criteria.dates == null ? t('Dates') : dateRangeLabel(criteria.dates!),
                   active: criteria.dates != null,
                   onTap: () => pickDates(context, ref),
                 ),
@@ -96,7 +97,7 @@ class ExploreScreen extends ConsumerWidget {
             child: Semantics(
               liveRegion: true,
               child: Text(
-                results.isEmpty ? 'Aucun bien' : '${plural(results.length, 'bien')} à Lomé',
+                results.isEmpty ? t('Aucun bien') : t('{count} à Lomé', {'count': plural(results.length, 'bien')}),
                 style: context.tt.bodyMedium,
               ),
             ),
@@ -105,9 +106,9 @@ class ExploreScreen extends ConsumerWidget {
             child: results.isEmpty
                 ? EmptyState(
                     icon: Icons.travel_explore_rounded,
-                    title: 'Aucun bien ne correspond',
-                    message: 'Élargissez la zone, le budget, les équipements ou le nombre de voyageurs.',
-                    actionLabel: 'Réinitialiser les filtres',
+                    title: t('Aucun bien ne correspond'),
+                    message: t('Élargissez la zone, le budget, les équipements ou le nombre de voyageurs.'),
+                    actionLabel: t('Réinitialiser les filtres'),
                     onAction: notifier.reset,
                   )
                 : ListView.separated(

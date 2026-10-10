@@ -1,6 +1,25 @@
 import 'package:flutter/material.dart';
+import '../../../core/i18n/i18n.dart';
 
 typedef Json = Map<String, dynamic>;
+
+/// Libellés traduits à partir des codes de l'API (repli : libellé fourni par l'API).
+String _label(Map<String, String> labels, Object? code, Object? fallback) {
+  final fr = labels[code];
+  return fr != null ? t(fr) : (fallback as String? ?? '');
+}
+
+const _bookingStatuses = {
+  'pending': 'En attente de paiement',
+  'confirmed': 'Confirmée',
+  'cancelled': 'Annulée',
+  'completed': 'Terminée',
+  'refunded': 'Remboursée',
+};
+const _stayTypes = {'night': 'Nuitées', 'day': 'Journée', 'three_hours': '3 heures'};
+const _paymentKinds = {'advance': 'Acompte', 'balance': 'Solde', 'full': 'Paiement intégral', 'refund': 'Remboursement'};
+const _paymentMethods = {'mobile_money': 'Mobile Money', 'card': 'Carte bancaire', 'bank_transfer': 'Virement bancaire'};
+const _paymentStatuses = {'pending': 'En attente', 'succeeded': 'Réussi', 'failed': 'Échoué', 'cancelled': 'Annulé'};
 
 /// Montant FCFA : tolère un entier transmis en décimal ou absent (0).
 int _int(Object? value) => (value as num?)?.toInt() ?? 0;
@@ -11,9 +30,10 @@ enum StayType {
   day('day', 'Journée'),
   threeHours('three_hours', '3 heures');
 
-  const StayType(this.code, this.label);
+  const StayType(this.code, this._label);
   final String code;
-  final String label;
+  final String _label;
+  String get label => t(_label);
 }
 
 /// Moyens de paiement proposés au client.
@@ -22,10 +42,12 @@ enum PaymentMethod {
   card('card', 'Carte bancaire', 'Visa, Mastercard', Icons.credit_card_rounded),
   bankTransfer('bank_transfer', 'Virement bancaire', 'Confirmé par la conciergerie à réception', Icons.account_balance_outlined);
 
-  const PaymentMethod(this.code, this.label, this.hint, this.icon);
+  const PaymentMethod(this.code, this._label, this._hint, this.icon);
   final String code;
-  final String label;
-  final String hint;
+  final String _label;
+  final String _hint;
+  String get label => t(_label);
+  String get hint => t(_hint);
   final IconData icon;
 }
 
@@ -125,10 +147,10 @@ class BookingPayment {
   factory BookingPayment.fromJson(Json j) => BookingPayment(
         id: j['id'] as int,
         kind: j['kind'] as String,
-        kindLabel: j['kind_label'] as String,
-        methodLabel: j['method_label'] as String,
+        kindLabel: _label(_paymentKinds, j['kind'], j['kind_label']),
+        methodLabel: _label(_paymentMethods, j['method'], j['method_label']),
         status: j['status'] as String,
-        statusLabel: j['status_label'] as String,
+        statusLabel: _label(_paymentStatuses, j['status'], j['status_label']),
         amount: j['amount'] as int,
         checkoutUrl: j['checkout_url'] as String?,
         instructions: j['instructions'] as String?,
@@ -218,8 +240,8 @@ class Booking {
     return Booking(
       reference: j['reference'] as String,
       status: j['status'] as String,
-      statusLabel: j['status_label'] as String,
-      stayTypeLabel: j['stay_type_label'] as String,
+      statusLabel: _label(_bookingStatuses, j['status'], j['status_label']),
+      stayTypeLabel: _label(_stayTypes, j['stay_type'], j['stay_type_label']),
       startAt: DateTime.parse(j['start_at'] as String),
       endAt: DateTime.parse(j['end_at'] as String),
       nights: j['nights'] as int,
