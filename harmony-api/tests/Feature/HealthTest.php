@@ -30,3 +30,11 @@ it('utilise le fuseau de Lomé', function () {
 it('refuse l\'accès au profil sans jeton', function () {
     $this->getJson('/api/v1/auth/me')->assertUnauthorized();
 });
+
+it('fournit les taux d’affichage des devises', function () {
+    config(['harmony.currencies.USD' => 605.5]);
+    $this->getJson('/api/v1/settings')->assertOk()
+        ->assertJsonPath('data.currencies.XOF', 1)
+        ->assertJsonPath('data.currencies.EUR', 655.957)
+        ->assertJsonPath('data.currencies.USD', 605.5);
+});

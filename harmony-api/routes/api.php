@@ -21,6 +21,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/apartments/{apartment}/availability', [AvailabilityController::class, 'show']);
         Route::post('/bookings/quote', [BookingController::class, 'quote'])->name('bookings.quote');
 
+        // Taux d'affichage des devises (les paiements restent en FCFA).
+        Route::get('/settings', fn () => response()->json(['data' => [
+            'currencies' => ['XOF' => 1] + config('harmony.currencies'),
+        ]]));
+
         // Galerie d'art.
         Route::get('/gallery/artists', [GalleryController::class, 'artists']);
         Route::get('/gallery/artworks', [GalleryController::class, 'index']);

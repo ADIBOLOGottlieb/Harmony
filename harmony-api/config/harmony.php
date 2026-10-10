@@ -57,6 +57,12 @@ return [
         'instructions' => env('HARMONY_BANK_TRANSFER_INSTRUCTIONS', 'Les coordonnées bancaires vous sont communiquées par la conciergerie.'),
     ],
 
+    // Devises d'affichage dans l'app : FCFA pour une unité. Paiements toujours en FCFA.
+    'currencies' => [
+        'EUR' => 655.957, // parité fixe
+        'USD' => (float) env('HARMONY_USD_RATE', 600), // taux indicatif
+    ],
+
     // Galerie d'art : réservation de l'œuvre le temps du règlement, livraison à Lomé.
     'gallery' => [
         'hold_hours' => (int) env('HARMONY_GALLERY_HOLD_HOURS', 48),
