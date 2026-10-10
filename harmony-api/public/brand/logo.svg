@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 304" width="1000" height="304">
+  <title>HARMONY HOME</title>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EAD6A6"/>
+      <stop offset=".5" stop-color="#CDAE6E"/>
+      <stop offset="1" stop-color="#A88543"/>
+    </linearGradient>
+    <radialGradient id="night" cx=".5" cy=".3" r=".85">
+      <stop offset="0" stop-color="#22365F"/>
+      <stop offset=".6" stop-color="#14213D"/>
+      <stop offset="1" stop-color="#0B1426"/>
+    </radialGradient>
+  </defs>
+  <g transform="translate(-140 -108)">
+    <path d="M160 396 V250 A96 96 0 0 1 352 250 V396" fill="none" stroke="url(#gold)" stroke-width="15" stroke-linecap="round"/>
+    <path d="M190 396 V254 A66 66 0 0 1 322 254 V396" fill="none" stroke="#C8A96A" stroke-opacity=".45" stroke-width="5" stroke-linecap="round"/>
+    <path fill="url(#gold)" d="M205 268 h40 v5 h-11 v42 h44 v-42 h-11 v-5 h40 v5 h-11 v106 h11 v5 h-40 v-5 h11 v-50 h-44 v50 h11 v5 h-40 v-5 h11 v-106 h-11 z"/>
+    <rect x="244" y="124" width="24" height="24" transform="rotate(45 256 136)" fill="url(#gold)"/>
+  </g>
+  <text x="270" y="176" font-family="Playfair Display, Georgia, serif" font-size="96" letter-spacing="22" fill="#14213D">HARMONY</text>
+  <text x="274" y="244" font-family="Manrope, Arial, sans-serif" font-size="36" letter-spacing="26" fill="#7A5F2A">HOME</text>
+</svg>

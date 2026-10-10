@@ -11,7 +11,7 @@ Plateforme de **conciergerie immobilière** type Airbnb pour Lomé et l'Afrique 
   - **Keepalive** : `.github/workflows/keepalive.yml` appelle la sonde chaque jour (pause Supabase après 7 jours). À retirer lors du passage aux plans payants.
   - **La configuration de Supabase, Render et des variables GitHub est faite par l'administrateur** : on prépare le dépôt et `docs/deploiement-render.md`, on ne touche pas aux tableaux de bord.
 - Dépôt : https://github.com/ADIBOLOGottlieb/Harmony (monorepo, branche `main`). CI dans `.github/workflows/ci.yml` ; APK de test publié à chaque push sur `harmony-app/` (`android-apk.yml`, onglet Releases).
-- Français par défaut, textes prêts pour l'i18n. Devise FCFA en entiers (jamais de décimales ni de float). Fuseau `Africa/Lome` (UTC+0) ; stocker en UTC, afficher en heure locale.
+- Français par défaut ; anglais disponible. Dans l'app, chaque texte passe par `t('texte français')` (`lib/core/i18n/`, dictionnaire `en.dart`, test de couverture) ; côté API, `__()` et `lang/en.json` selon l'en-tête `Accept-Language`. Devise d'affichage au choix (FCFA, EUR à parité fixe, USD indicatif) via `price()` ; les paiements restent en FCFA. Devise FCFA en entiers (jamais de décimales ni de float). Fuseau `Africa/Lome` (UTC+0) ; stocker en UTC, afficher en heure locale.
 
 ## Produit
 - **Zones** (quartier/ville : nom, ville, pays, couverture) et **appartements** (titre, description, type, chambres, salles de bain, capacité, surface, équipements, prix par nuit, caution, galerie, statut disponible/occupé/maintenance, GPS, adresse, zone, propriétaire).
@@ -52,7 +52,7 @@ Plateforme de **conciergerie immobilière** type Airbnb pour Lomé et l'Afrique 
 
 ## Design (agence immobilière haut de gamme)
 - Sobre, rassurant, premium ; photographie d'abord ; beaucoup d'espace ; aucun look « template ».
-- Nom : **HARMONY HOME**. Logo : monogramme « H » sous une double arche (`HarmonyMark`) + logotype « HARMONY / HOME ».
+- Nom : **HARMONY HOME**. Logo : arche dorée (la porte d'entrée) encadrant un « H » didone, coiffée d'une clé de voûte en losange, sur bleu nuit. Sources dans `brand/` (SVG, icône Play Store) ; `HarmonyMark` le redessine dans l'app (tracé animé à l'ouverture) ; icônes Android adaptatives et monochromes dans `android/app/src/main/res/mipmap-*`.
 - Palette : bleu nuit `#14213D` (principale), champagne `#C8A96A` (accent), ivoire `#F7F3EC` (fond), gris chauds ; texte champagne sur fond clair en `#7A5F2A` (contraste AA). Mode sombre cohérent (fond `#0C1220`).
 - Typographie : Playfair Display (titres) et Manrope (texte), **embarquées dans `assets/fonts/`** (OFL) pour fonctionner hors-ligne.
 - **Un seul fichier source : `lib/core/theme/design_tokens.dart`** (palette, `HarmonyColors` en extension de thème, espacements, rayons 8–12 px, ombres douces, durées, styles de texte). Les composants Material sont stylés dans `app_theme.dart` ; aucun écran ne redéfinit couleurs ou tailles.
@@ -75,7 +75,8 @@ Plateforme de **conciergerie immobilière** type Airbnb pour Lomé et l'Afrique 
 4. ✅ Calendrier et réservation : disponibilités, blocages, prix saisonniers, contrainte anti-chevauchement, flux complet, référence, annulation.
 5. ✅ Paiement FedaPay (sandbox), virement, acompte/solde, webhooks, remboursements, reçus.
 6. ✅ Espace de gestion Filament (`/gestion`) : tableau de bord, CRUD, virements et remboursements, ménage/maintenance, avis, exports CSV/PDF.
-7. À venir : prestataire SMS, notifications (FCM, WhatsApp), stockage S3 des photos en production, `Bien` (phase 2).
+7. ✅ Galerie d'art (œuvres, artistes, acquisitions réservées 48 h), photo de profil, langue FR/EN, devise d'affichage, logo et icônes.
+8. À venir : prestataire SMS, notifications (FCM, WhatsApp), stockage S3 des photos en production, `Bien` (phase 2).
 
 ## Décisions ouvertes
 - Numéro WhatsApp/téléphone du concierge (`CONCIERGE_PHONE`).

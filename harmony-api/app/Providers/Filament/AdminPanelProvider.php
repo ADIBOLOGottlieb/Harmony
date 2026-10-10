@@ -27,6 +27,10 @@ class AdminPanelProvider extends PanelProvider
             ->path('gestion')
             ->login()
             ->brandName('HARMONY HOME')
+            ->brandLogo(fn () => asset('brand/logo.svg'))
+            ->darkModeBrandLogo(fn () => asset('brand/logo-dark.svg'))
+            ->brandLogoHeight('2.4rem')
+            ->favicon(fn () => asset('brand/favicon.svg'))
             ->colors([
                 'primary' => Color::hex('#B8954F'),
                 'gray' => Color::Slate,
