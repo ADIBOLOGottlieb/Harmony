@@ -15,7 +15,6 @@ use App\Services\Booking\BookingException;
 use App\Services\Payments\Gateways\BankTransferGateway;
 use App\Services\Payments\Gateways\FedaPayGateway;
 use App\Services\Payments\Gateways\SandboxGateway;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -85,16 +84,23 @@ class PaymentService
         $event = $this->gatewayNamed($gatewayName)->parseWebhook($request);
 
         DB::transaction(function () use ($gatewayName, $event) {
-            try {
-                $record = PaymentEvent::query()->create([
-                    'gateway' => $gatewayName,
-                    'event_id' => $event->eventId,
-                    'type' => $event->type,
-                    'payload' => $event->payload,
-                ]);
-            } catch (UniqueConstraintViolationException) {
+            // INSERT … ON CONFLICT DO NOTHING : sous PostgreSQL, une violation d'unicité
+            // interceptée laisserait la transaction en échec ; on ne la provoque donc pas.
+            $inserted = PaymentEvent::query()->insertOrIgnore([
+                'gateway' => $gatewayName,
+                'event_id' => $event->eventId,
+                'type' => $event->type,
+                'payload' => json_encode($event->payload),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            if ($inserted === 0) {
                 return; // Déjà reçu : rien à refaire.
             }
+            $record = PaymentEvent::query()
+                ->where('gateway', $gatewayName)
+                ->where('event_id', $event->eventId)
+                ->firstOrFail();
 
             if ($event->outcome !== null && $event->providerReference !== null) {
                 $payment = Payment::query()

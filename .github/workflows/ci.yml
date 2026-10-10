@@ -54,7 +54,10 @@ jobs:
       - name: Migrations (PostgreSQL)
         run: php artisan migrate --force
       - name: Tests (Pest)
-        run: ./vendor/bin/pest
+        run: ./vendor/bin/pest --log-junit junit.xml
+      - name: Résumé des échecs (annotations publiques)
+        if: failure()
+        run: php tests/junit-annotations.php junit.xml
 
   docker:
     name: Image Docker de l'API (Render)
