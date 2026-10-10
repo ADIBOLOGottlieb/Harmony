@@ -48,3 +48,18 @@ function something()
 {
     // ..
 }
+
+/*
+| Données de réservation par défaut : Duplex Horizon, 3 nuits du 20 au 23 octobre 2026.
+*/
+function bookingPayload(array $overrides = []): array
+{
+    return array_merge([
+        'apartment' => 'duplex-horizon',
+        'stay_type' => 'night',
+        'check_in' => '2026-10-20',
+        'check_out' => '2026-10-23',
+        'guests' => 2,
+        'payment_method' => 'mobile_money',
+    ], $overrides);
+}

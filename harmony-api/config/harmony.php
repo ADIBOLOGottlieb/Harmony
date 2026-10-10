@@ -30,6 +30,24 @@ return [
     // Politique d'annulation par défaut : gratuite jusqu'à N jours avant l'arrivée.
     'free_cancellation_days' => (int) env('HARMONY_FREE_CANCELLATION_DAYS', 5),
 
+    'otp' => [
+        'ttl_minutes' => 10,
+        'max_attempts' => 5,
+        // Démonstration uniquement : renvoie le code dans la réponse tant qu'aucun prestataire SMS n'est branché.
+        'expose_code' => (bool) env('OTP_EXPOSE_CODE', false),
+    ],
+
+    'payments' => [
+        // Paiement simulé (page signée). Actif hors production par défaut ; en production, à activer
+        // explicitement (PAYMENTS_SANDBOX=true) pour une démonstration, jamais avec de vrais clients.
+        'sandbox_enabled' => (bool) env('PAYMENTS_SANDBOX', env('APP_ENV', 'production') !== 'production'),
+    ],
+
+    'bank_transfer' => [
+        'expiry_hours' => (int) env('HARMONY_BANK_TRANSFER_EXPIRY_HOURS', 48),
+        'instructions' => env('HARMONY_BANK_TRANSFER_INSTRUCTIONS', 'Les coordonnées bancaires vous sont communiquées par la conciergerie.'),
+    ],
+
     'max_nights' => (int) env('HARMONY_MAX_NIGHTS', 90),
 
     'features' => [

@@ -28,5 +28,5 @@ it('utilise le fuseau de Lomé', function () {
 });
 
 it('refuse l\'accès au profil sans jeton', function () {
-    $this->getJson('/api/v1/user')->assertUnauthorized();
+    $this->getJson('/api/v1/auth/me')->assertUnauthorized();
 });

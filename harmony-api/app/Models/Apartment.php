@@ -66,6 +66,24 @@ class Apartment extends Model
         return $this->hasMany(ApartmentPhoto::class)->orderBy('position');
     }
 
+    /** @return HasMany<ApartmentBlock, $this> */
+    public function blocks(): HasMany
+    {
+        return $this->hasMany(ApartmentBlock::class);
+    }
+
+    /** @return HasMany<SeasonalPrice, $this> */
+    public function seasonalPrices(): HasMany
+    {
+        return $this->hasMany(SeasonalPrice::class);
+    }
+
+    /** @return HasMany<Booking, $this> */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
     public function isBookable(): bool
     {
         return $this->status === ApartmentStatus::Available;

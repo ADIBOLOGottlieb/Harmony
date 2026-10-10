@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    // Paiements Mobile Money (TMoney, Flooz) et cartes. Clés uniquement en variables d'environnement.
+    'fedapay' => [
+        'secret_key' => env('FEDAPAY_SECRET_KEY'),
+        'webhook_secret' => env('FEDAPAY_WEBHOOK_SECRET'),
+        'environment' => env('FEDAPAY_ENVIRONMENT', 'sandbox'),
+    ],
+
 ];

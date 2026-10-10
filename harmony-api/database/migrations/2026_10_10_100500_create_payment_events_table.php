@@ -1,0 +1,29 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+/** Événements de webhook reçus : l'unicité (passerelle, identifiant) garantit l'idempotence. */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('payment_events', function (Blueprint $table) {
+            $table->id();
+            $table->string('gateway', 30);
+            $table->string('event_id');
+            $table->string('type');
+            $table->json('payload');
+            $table->timestampTz('processed_at')->nullable();
+            $table->timestamps();
+
+            $table->unique(['gateway', 'event_id']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('payment_events');
+    }
+};
