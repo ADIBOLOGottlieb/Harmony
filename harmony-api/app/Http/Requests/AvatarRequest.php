@@ -23,11 +23,11 @@ class AvatarRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'photo.required' => 'Choisissez une photo.',
-            'photo.image' => 'Le fichier choisi n’est pas une image.',
-            'photo.mimes' => 'Formats acceptés : JPEG, PNG ou WebP.',
-            'photo.max' => 'La photo ne doit pas dépasser 5 Mo.',
-            'photo.dimensions' => 'La photo est trop petite (100 × 100 pixels minimum).',
+            'photo.required' => __('Choisissez une photo.'),
+            'photo.image' => __('Le fichier choisi n’est pas une image.'),
+            'photo.mimes' => __('Formats acceptés : JPEG, PNG ou WebP.'),
+            'photo.max' => __('La photo ne doit pas dépasser 5 Mo.'),
+            'photo.dimensions' => __('La photo est trop petite (100 × 100 pixels minimum).'),
         ];
     }
 }

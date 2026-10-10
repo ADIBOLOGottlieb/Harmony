@@ -232,3 +232,13 @@ it('garantit en base l’absence de chevauchement (PostgreSQL)', function () {
     Booking::query()->create(array_merge($overlap, ['reference' => 'HH-CCCCCC', 'status' => 'cancelled']));
     expect(Booking::query()->count())->toBe(2);
 });
+
+it('répond dans la langue demandée par l’app', function () {
+    $this->seed(CatalogSeeder::class);
+    $payload = ['apartment' => 'villa-lagune', 'stay_type' => 'night', 'check_in' => now()->addDays(10)->toDateString(), 'check_out' => now()->addDays(12)->toDateString(), 'guests' => 2];
+
+    $this->postJson('/api/v1/bookings/quote', $payload, ['Accept-Language' => 'en'])
+        ->assertOk()->assertJsonPath('data.lines.1.label', 'Service fee');
+    $this->postJson('/api/v1/bookings/quote', $payload, ['Accept-Language' => 'fr-FR,fr;q=0.9'])
+        ->assertOk()->assertJsonPath('data.lines.1.label', 'Frais de service');
+});

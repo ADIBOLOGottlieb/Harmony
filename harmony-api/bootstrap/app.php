@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\SetLocaleFromHeader;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Render termine le TLS sur son proxy : on lui fait confiance pour
         // le schéma (https) et l'adresse IP réelle du client.
         $middleware->trustProxies(at: '*');
+        // Langue des messages de l'API (Accept-Language envoyé par l'app).
+        $middleware->api(append: [SetLocaleFromHeader::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -27,7 +27,7 @@ class ArtworkOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'delivery_address.required_if' => 'Indiquez l’adresse de livraison.',
+            'delivery_address.required_if' => __('Indiquez l’adresse de livraison.'),
         ];
     }
 }

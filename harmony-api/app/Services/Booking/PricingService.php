@@ -14,8 +14,8 @@ class PricingService
     {
         [$accommodation, $lines] = match ($window->type) {
             StayType::Night => $this->nights($apartment, $window),
-            StayType::Day => $this->flat($apartment->short_stay_day_price, 'Journée'),
-            StayType::ThreeHours => $this->flat($apartment->short_stay_three_hours_price, 'Créneau de 3 heures'),
+            StayType::Day => $this->flat($apartment->short_stay_day_price, __('Journée')),
+            StayType::ThreeHours => $this->flat($apartment->short_stay_three_hours_price, __('Créneau de 3 heures')),
         };
 
         $serviceFee = (int) round($accommodation * (float) config('harmony.service_fee_rate'));
@@ -26,7 +26,7 @@ class PricingService
             ? (int) round($total * (float) config('harmony.advance_rate'))
             : $total;
 
-        $lines[] = ['label' => 'Frais de service', 'amount' => $serviceFee];
+        $lines[] = ['label' => __('Frais de service'), 'amount' => $serviceFee];
 
         return new Quote($window, $accommodation, $serviceFee, $total, $apartment->deposit, $advance, $lines);
     }
@@ -67,7 +67,10 @@ class PricingService
             $amount = $price * $count;
             $total += $amount;
             $lines[] = [
-                'label' => $count.' nuit'.($count > 1 ? 's' : '').' × '.number_format($price, 0, ',', ' ').' FCFA',
+                'label' => __($count > 1 ? ':count nuits × :price FCFA' : ':count nuit × :price FCFA', [
+                    'count' => $count,
+                    'price' => number_format($price, 0, ',', ' '),
+                ]),
                 'amount' => $amount,
             ];
         }

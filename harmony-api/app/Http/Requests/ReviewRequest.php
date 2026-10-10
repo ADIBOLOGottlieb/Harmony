@@ -24,9 +24,9 @@ class ReviewRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'rating.required' => 'Choisissez une note de 1 à 5.',
-            'rating.between' => 'Choisissez une note de 1 à 5.',
-            'comment.max' => 'Votre commentaire ne doit pas dépasser 1 000 caractères.',
+            'rating.required' => __('Choisissez une note de 1 à 5.'),
+            'rating.between' => __('Choisissez une note de 1 à 5.'),
+            'comment.max' => __('Votre commentaire ne doit pas dépasser 1 000 caractères.'),
         ];
     }
 }

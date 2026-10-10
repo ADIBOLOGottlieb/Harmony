@@ -40,13 +40,13 @@ class OtpService
         $otp = OtpCode::query()->where('phone', $phone)->whereNull('consumed_at')->latest('id')->first();
 
         if (! $otp || $otp->expires_at->isPast() || $otp->attempts >= (int) config('harmony.otp.max_attempts')) {
-            throw ValidationException::withMessages(['code' => 'Ce code a expiré. Demandez-en un nouveau.']);
+            throw ValidationException::withMessages(['code' => __('Ce code a expiré. Demandez-en un nouveau.')]);
         }
 
         if (! Hash::check($code, $otp->code_hash)) {
             $otp->increment('attempts');
 
-            throw ValidationException::withMessages(['code' => 'Code incorrect.']);
+            throw ValidationException::withMessages(['code' => __('Code incorrect.')]);
         }
 
         $otp->update(['consumed_at' => now()]);

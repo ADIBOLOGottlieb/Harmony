@@ -15,17 +15,17 @@ class GalleryException extends RuntimeException
 
     public static function unavailable(): self
     {
-        return new self('Cette œuvre vient d’être réservée ou vendue.', 'artwork_unavailable', 409);
+        return new self(__('Cette œuvre vient d’être réservée ou vendue.'), 'artwork_unavailable', 409);
     }
 
     public static function addressRequired(): self
     {
-        return new self('Indiquez l’adresse de livraison.', 'address_required');
+        return new self(__('Indiquez l’adresse de livraison.'), 'address_required');
     }
 
     public static function notCancellable(): self
     {
-        return new self('Cette demande ne peut plus être annulée.', 'not_cancellable', 409);
+        return new self(__('Cette demande ne peut plus être annulée.'), 'not_cancellable', 409);
     }
 
     public function render(): JsonResponse

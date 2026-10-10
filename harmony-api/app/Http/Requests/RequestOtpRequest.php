@@ -23,7 +23,7 @@ class RequestOtpRequest extends FormRequest
     /** @return array<string, string> */
     public function messages(): array
     {
-        return ['phone.regex' => 'Saisissez un numéro au format international, par exemple +228 90 12 34 56.'];
+        return ['phone.regex' => __('Saisissez un numéro au format international, par exemple +228 90 12 34 56.')];
     }
 
     protected function prepareForValidation(): void

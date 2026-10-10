@@ -18,7 +18,7 @@ class AuthController extends Controller
         $debugCode = $otp->send($request->validated('phone'));
 
         return response()->json(array_filter([
-            'message' => 'Un code vous a été envoyé par SMS.',
+            'message' => __('Un code vous a été envoyé par SMS.'),
             'expires_in' => (int) config('harmony.otp.ttl_minutes') * 60,
             // Uniquement en démonstration (OTP_EXPOSE_CODE), tant qu'aucun prestataire SMS n'est branché.
             'debug_code' => $debugCode,

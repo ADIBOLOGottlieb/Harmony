@@ -24,6 +24,7 @@ class ArtworkResource extends JsonResource
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
             'featured' => $this->featured,
+            'delivery_fee' => (int) config('harmony.gallery.delivery_fee'),
             'artist' => new ArtistResource($this->whenLoaded('artist')),
             'photos' => $this->whenLoaded('photos', fn () => $this->photos->map(fn ($p) => Media::url($p->path))->values()),
         ];
