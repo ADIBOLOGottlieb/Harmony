@@ -59,3 +59,47 @@ services:
         value: database
       - key: PORT
         value: "8080"
+
+      # Premier compte de l'espace de gestion (/gestion), créé au démarrage s'il n'existe pas.
+      # Retirer HARMONY_ADMIN_PASSWORD une fois connecté.
+      - key: HARMONY_ADMIN_EMAIL
+        sync: false
+      - key: HARMONY_ADMIN_PASSWORD
+        sync: false # 12 caractères minimum
+
+      # Démonstration (à repasser à false avant l'ouverture au public).
+      - key: HARMONY_SEED_DEMO
+        value: "true" # catalogue de démonstration chargé une fois si la base est vide
+      - key: OTP_EXPOSE_CODE
+        value: "true" # aucun SMS branché : le code est affiché dans l'app
+      - key: PAYMENTS_SANDBOX
+        value: "true" # paiement simulé ; false dès que FedaPay est configuré
+
+      # Paiements FedaPay (Mobile Money TMoney/Flooz et carte) : clés saisies par l'administrateur.
+      - key: FEDAPAY_ENVIRONMENT
+        value: sandbox # live en production
+      - key: FEDAPAY_SECRET_KEY
+        sync: false
+      - key: FEDAPAY_WEBHOOK_SECRET
+        sync: false
+      - key: HARMONY_BANK_TRANSFER_INSTRUCTIONS
+        sync: false # coordonnées bancaires affichées au client qui choisit le virement
+
+      # Photos de l'espace de gestion : le disque de Render est effacé à chaque déploiement.
+      # Stockage S3 compatible (ex. Supabase Storage, bucket public) ; voir docs/deploiement-render.md.
+      - key: MEDIA_DISK
+        value: public # passer à s3 une fois les clés AWS_* saisies
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_DEFAULT_REGION
+        value: eu-central-1
+      - key: AWS_BUCKET
+        sync: false
+      - key: AWS_ENDPOINT
+        sync: false # ex. https://<référence>.supabase.co/storage/v1/s3
+      - key: AWS_URL
+        sync: false # ex. https://<référence>.supabase.co/storage/v1/object/public/<bucket>
+      - key: AWS_USE_PATH_STYLE_ENDPOINT
+        value: "true"

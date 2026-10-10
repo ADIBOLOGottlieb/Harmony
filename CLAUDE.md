@@ -70,17 +70,19 @@ Plateforme de **conciergerie immobilière** type Airbnb pour Lomé et l'Afrique 
 
 ## Plan d'exécution
 1. ✅ Design system agence et refonte de tous les écrans (catalogue de démonstration).
-2. Modèles et API : zones, appartements, photos, `Bien` (flag), rôles et Policies, limitation de débit, seeders Lomé, endpoints catalogue.
-3. Écrans catalogue branchés sur l'API : filtres complets (budget, équipements), carte, cache hors-ligne, favoris persistés.
-4. Calendrier et réservation : disponibilités, blocages, prix saisonniers, contrainte anti-chevauchement, flux complet, référence, annulation.
-5. Paiement FedaPay (sandbox), virement, acompte/solde, webhooks, remboursements, reçus.
-6. Espace de gestion : tableau de bord, CRUD, ménage/maintenance, exports CSV/PDF.
+2. ✅ Modèles et API : zones, appartements, photos, `Bien` (flag), rôles et Policies, limitation de débit, seeders Lomé, endpoints catalogue.
+3. ✅ Écrans catalogue branchés sur l'API : filtres complets (budget, équipements), carte, cache hors-ligne, favoris persistés.
+4. ✅ Calendrier et réservation : disponibilités, blocages, prix saisonniers, contrainte anti-chevauchement, flux complet, référence, annulation.
+5. ✅ Paiement FedaPay (sandbox), virement, acompte/solde, webhooks, remboursements, reçus.
+6. ✅ Espace de gestion Filament (`/gestion`) : tableau de bord, CRUD, virements et remboursements, ménage/maintenance, avis, exports CSV/PDF.
+7. À venir : prestataire SMS, notifications (FCM, WhatsApp), stockage S3 des photos en production, `Bien` (phase 2).
 
 ## Décisions ouvertes
 - Numéro WhatsApp/téléphone du concierge (`CONCIERGE_PHONE`).
-- Frais de service appliqués au client (montant ou pourcentage), avant l'étape 4.
-- Politique d'annulation par défaut, avant l'étape 4.
-- Heures d'arrivée et de départ standard (actuellement 14 h / 11 h dans la démo), avant l'étape 4.
+- Choix provisoires à confirmer par l'agence : frais de service 5 %, acompte 30 % (séjours courts payés en totalité), annulation gratuite jusqu'à J-5, arrivée 14 h, départ 11 h, journée 10 h-18 h, caution réglée à l'arrivée.
+- Prestataire SMS pour les codes de connexion.
+- Fournisseur de tuiles de carte en production (OSM public interdit en usage intensif : MapTiler, Stadia…), via `MAP_TILE_URL`.
+- Confidentialité : le catalogue n'expose que le quartier (`area`) ; l'adresse exacte (`address`) n'est révélée qu'après confirmation.
 
 ## Méthode de travail
 - Une étape du plan à la fois, commits petits et atomiques (`feat:`, `fix:`, `test:`, `docs:`).

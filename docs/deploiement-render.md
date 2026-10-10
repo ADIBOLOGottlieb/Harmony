@@ -78,17 +78,56 @@ Ils sont automatiques : chaque push sur `main` qui modifie `harmony-api/` redép
 - **Supabase** met le projet en pause après 7 jours sans activité. Le ping quotidien l'évite, mais un projet en pause doit être relancé à la main depuis le tableau de bord. Les sauvegardes du plan gratuit sont limitées.
 - Avant l'ouverture au public, passer les deux services en plan payant, puis désactiver le workflow *Keepalive*.
 
-## Variables qui seront ajoutées plus tard
+## 6. Démonstration et espace de gestion
 
-Au fil du projet, le développeur indiquera les secrets à ajouter dans **Render → Environment**. Ils ne sont jamais écrits dans le dépôt.
+À saisir dans **Render → harmony-api → Environment**, puis **Save changes** : le service redémarre. Si le service a été créé à la main et non depuis le blueprint, chaque variable s'ajoute ici avec **Add Environment Variable**.
+
+| Variable | Valeur | Rôle |
+|---|---|---|
+| `HARMONY_SEED_DEMO` | `true` | Charge les 5 zones et les 8 biens de démonstration au premier démarrage, uniquement si la base ne contient encore aucun bien. |
+| `OTP_EXPOSE_CODE` | `true` | Aucun SMS n'est branché : l'app affiche le code de connexion. À passer à `false` dès qu'un prestataire SMS est configuré. |
+| `PAYMENTS_SANDBOX` | `true` | Paiement simulé (aucun débit réel). À passer à `false` quand FedaPay est configuré. |
+| `HARMONY_ADMIN_EMAIL` | votre e-mail | Identifiant du premier compte administrateur. |
+| `HARMONY_ADMIN_PASSWORD` | 12 caractères minimum | Mot de passe de ce compte. **À supprimer de Render une fois connecté** : il ne sert qu'à la création du compte et n'écrase jamais un compte existant. |
+| `HARMONY_BANK_TRANSFER_INSTRUCTIONS` | texte | Coordonnées bancaires affichées au client qui choisit le virement. |
+
+L'espace de gestion est ensuite à l'adresse `https://<URL de l'API>/gestion`. On s'y connecte avec l'e-mail et le mot de passe ci-dessus. Les autres comptes (concierges, propriétaires) se créent depuis **Clients et comptes** : changer le rôle du compte et lui donner un mot de passe. Un client crée d'abord son compte dans l'app avec son numéro.
+
+Ce que chaque rôle peut faire :
+
+- **Administrateur** : tout, y compris les rôles et les mots de passe.
+- **Concierge** : biens, zones, réservations, validation des virements et des remboursements, ménage et maintenance, avis. Il consulte les comptes sans pouvoir les modifier.
+- **Propriétaire** : ses biens uniquement (fiche, photos, blocages de calendrier, prix saisonniers), les réservations et le ménage qui s'y rapportent, sans les coordonnées des clients.
+
+## 7. Paiements réels (FedaPay)
+
+Dans le tableau de bord FedaPay, créer un webhook vers `https://<URL de l'API>/api/v1/payments/webhooks/fedapay`, puis renseigner dans Render :
+
+| Variable | Valeur |
+|---|---|
+| `FEDAPAY_ENVIRONMENT` | `sandbox` pour les essais, `live` en production |
+| `FEDAPAY_SECRET_KEY` | clé secrète FedaPay |
+| `FEDAPAY_WEBHOOK_SECRET` | secret de signature du webhook |
+| `PAYMENTS_SANDBOX` | `false` |
+
+## 8. Photos téléversées (stockage)
+
+Le disque de Render est effacé à chaque déploiement : une photo téléversée depuis l'espace de gestion disparaîtrait. Avant d'en ajouter de vraies, utiliser un stockage compatible S3, par exemple Supabase Storage :
+
+1. Supabase → **Storage** → **New bucket** `harmony-media`, en cochant **Public bucket**.
+2. Supabase → **Project Settings → Storage → S3 access keys** → **New access key**.
+3. Dans Render : `MEDIA_DISK=s3`, puis `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (la clé créée), `AWS_DEFAULT_REGION=eu-central-1`, `AWS_BUCKET=harmony-media`, `AWS_ENDPOINT=https://<référence>.supabase.co/storage/v1/s3`, `AWS_URL=https://<référence>.supabase.co/storage/v1/object/public/harmony-media` et `AWS_USE_PATH_STYLE_ENDPOINT=true`.
+
+Les photos de démonstration sont embarquées dans l'app et ne dépendent pas de ce stockage.
+
+## Variables qui seront ajoutées plus tard
 
 | Étape | Variables |
 |---|---|
-| Paiement | Clés FedaPay et secret de signature du webhook |
+| SMS (codes de connexion) | Identifiants du prestataire SMS |
 | Notifications | Identifiants Firebase (FCM) et jeton WhatsApp Cloud API |
-| Temps réel | Configuration Laravel Reverb |
 
-Il faudra aussi un traitement des files d'attente et une tâche planifiée (expiration des réservations impayées). Ce guide sera mis à jour à ce moment-là.
+Sur le plan gratuit, aucun processus planifié ne tourne. L'expiration des réservations impayées et le passage des séjours en « terminé » se font donc à la consultation des réservations. En plan payant, ajouter un *Background Worker* Render avec la commande `php artisan schedule:work`.
 
 ## Dépannage
 
