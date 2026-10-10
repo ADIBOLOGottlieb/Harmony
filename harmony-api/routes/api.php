@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Controllers\Api\V1\ApartmentController;
+use App\Http\Controllers\Api\V1\ArtworkOrderController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
+use App\Http\Controllers\Api\V1\AvatarController;
 use App\Http\Controllers\Api\V1\BookingController;
+use App\Http\Controllers\Api\V1\GalleryController;
 use App\Http\Controllers\Api\V1\PaymentWebhookController;
 use App\Http\Controllers\Api\V1\ZoneController;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +20,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/apartments/{apartment}', [ApartmentController::class, 'show']);
         Route::get('/apartments/{apartment}/availability', [AvailabilityController::class, 'show']);
         Route::post('/bookings/quote', [BookingController::class, 'quote'])->name('bookings.quote');
+
+        // Galerie d'art.
+        Route::get('/gallery/artists', [GalleryController::class, 'artists']);
+        Route::get('/gallery/artworks', [GalleryController::class, 'index']);
+        Route::get('/gallery/artworks/{artwork}', [GalleryController::class, 'show']);
     });
 
     // Connexion par téléphone et code à usage unique.
@@ -36,6 +44,15 @@ Route::prefix('v1')->group(function () {
         Route::get('/bookings', [BookingController::class, 'index']);
         Route::get('/bookings/{booking}', [BookingController::class, 'show']);
         Route::get('/bookings/{booking}/receipt', [BookingController::class, 'receipt']);
+        Route::post('/auth/me/avatar', [AvatarController::class, 'store'])->middleware('throttle:booking');
+        Route::delete('/auth/me/avatar', [AvatarController::class, 'destroy']);
+
+        // Galerie : acquisitions du client.
+        Route::get('/gallery/orders', [ArtworkOrderController::class, 'index']);
+        Route::middleware('throttle:booking')->group(function () {
+            Route::post('/gallery/artworks/{artwork}/orders', [ArtworkOrderController::class, 'store']);
+            Route::post('/gallery/orders/{order}/cancel', [ArtworkOrderController::class, 'cancel']);
+        });
         Route::middleware('throttle:booking')->group(function () {
             Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
             Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);

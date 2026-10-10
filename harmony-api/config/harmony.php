@@ -57,6 +57,13 @@ return [
         'instructions' => env('HARMONY_BANK_TRANSFER_INSTRUCTIONS', 'Les coordonnées bancaires vous sont communiquées par la conciergerie.'),
     ],
 
+    // Galerie d'art : réservation de l'œuvre le temps du règlement, livraison à Lomé.
+    'gallery' => [
+        'hold_hours' => (int) env('HARMONY_GALLERY_HOLD_HOURS', 48),
+        'delivery_fee' => (int) env('HARMONY_GALLERY_DELIVERY_FEE', 10000),
+        'payment_instructions' => env('HARMONY_GALLERY_PAYMENT_INSTRUCTIONS', 'La galerie vous contacte sous 24 h pour le règlement (Mobile Money, virement ou sur place) et la remise de l’œuvre avec son certificat d’authenticité.'),
+    ],
+
     'max_nights' => (int) env('HARMONY_MAX_NIGHTS', 90),
 
     'features' => [

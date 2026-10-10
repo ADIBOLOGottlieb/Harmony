@@ -1,19 +1,25 @@
 <?php
 
+use App\Enums\ArtworkStatus;
 use App\Enums\BookingStatus;
+use App\Enums\DeliveryMethod;
 use App\Enums\MaintenanceStatus;
 use App\Enums\MaintenanceType;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Filament\Resources\Apartments\Pages\ListApartments;
+use App\Filament\Resources\ArtworkOrders\Pages\ViewArtworkOrder;
 use App\Filament\Resources\Bookings\Pages\ListBookings;
 use App\Filament\Resources\Bookings\Pages\ViewBooking;
 use App\Models\Apartment;
+use App\Models\Artwork;
 use App\Models\Booking;
 use App\Models\Review;
 use App\Models\User;
+use App\Services\Gallery\GalleryService;
 use Carbon\CarbonImmutable;
 use Database\Seeders\CatalogSeeder;
+use Database\Seeders\GallerySeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -173,4 +179,24 @@ it('charge le catalogue de démonstration une seule fois', function () {
     $count = Apartment::query()->count();
     $this->artisan('harmony:seed-demo')->assertSuccessful();
     expect(Apartment::query()->count())->toBe($count);
+});
+
+it('confirme la vente d’une œuvre depuis l’espace de gestion', function () {
+    $this->seed(GallerySeeder::class);
+    $client = User::factory()->create(['phone' => '+22890000078']);
+    $order = app(GalleryService::class)->order($client, Artwork::query()->where('slug', 'rythmes')->firstOrFail(), DeliveryMethod::Pickup, null, null);
+
+    $this->actingAs(($this->staff)());
+    $this->get('/gestion/acquisitions')->assertOk()->assertSee($order->reference);
+    Livewire::test(ViewArtworkOrder::class, ['record' => $order->getRouteKey()])
+        ->callAction('markPaid')
+        ->assertHasNoActionErrors();
+
+    expect(Artwork::query()->where('slug', 'rythmes')->value('status'))->toBe(ArtworkStatus::Sold);
+});
+
+it('ferme la galerie aux propriétaires', function () {
+    $this->actingAs(($this->staff)(UserRole::Owner));
+    $this->get('/gestion/oeuvres')->assertForbidden();
+    $this->get('/gestion/acquisitions')->assertForbidden();
 });
