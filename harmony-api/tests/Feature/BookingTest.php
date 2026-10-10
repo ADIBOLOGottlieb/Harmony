@@ -74,6 +74,14 @@ it('crée une réservation en attente avec un lien de paiement', function () {
         ->and($response->json('data.payments.0.checkout_url'))->toContain('/paiement/sandbox/')
         // L'adresse exacte reste masquée tant que la réservation n'est pas confirmée.
         ->and($response->json('data.apartment.address'))->toBeNull();
+
+    // Régression : l'app lit des entiers ; un montant null faisait échouer la réservation côté client.
+    foreach ($response->json('data.amounts') as $key => $value) {
+        if ($key !== 'currency') {
+            expect($value)->toBeInt();
+        }
+    }
+    expect($response->json('data.amounts.paid'))->toBe(0);
 });
 
 it('exige d’être connecté pour réserver', function () {
@@ -88,6 +96,16 @@ it('refuse des dates qui chevauchent une réservation existante', function () {
     $this->postJson('/api/v1/bookings', bookingPayload(['check_in' => '2026-10-22', 'check_out' => '2026-10-25']))
         ->assertStatus(409)
         ->assertJsonPath('code', 'dates_unavailable');
+});
+
+it('remplace la demande impayée du même client relancée sur les mêmes dates', function () {
+    Sanctum::actingAs($this->user);
+    $first = $this->postJson('/api/v1/bookings', bookingPayload())->assertCreated()->json('data.reference');
+    $second = $this->postJson('/api/v1/bookings', bookingPayload())->assertCreated()->json('data.reference');
+
+    expect($second)->not->toBe($first)
+        ->and(Booking::query()->where('reference', $first)->value('status'))->toBe(BookingStatus::Cancelled)
+        ->and(Booking::query()->where('reference', $first)->value('cancel_reason'))->toBe('replaced');
 });
 
 it('accepte une arrivée le jour du départ précédent', function () {

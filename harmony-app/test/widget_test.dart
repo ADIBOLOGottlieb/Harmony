@@ -300,6 +300,32 @@ void main() {
       expect(find.text('Adresse'), findsNothing);
     });
 
+    testWidgets('un montant absent dans la réponse n''empêche pas la réservation', (tester) async {
+      // Régression : l'API renvoyait "paid": null à la création, l'app affichait une erreur
+      // alors que la réservation existait (et bloquait ensuite les dates).
+      final booking = bookingJson(checkIn: checkIn, checkOut: checkOut);
+      booking['amounts'] = <String, Object?>{...(booking['amounts'] as Map<String, Object?>), 'paid': null};
+      final api = FakeApi({
+        'GET /apartments/villa-lagune/availability': (r) => {'data': availabilityJson(r)},
+        'POST /bookings/quote': (_) => {'data': quoteJson(checkIn, checkOut)},
+        'POST /bookings': (_) => FakeReply(201, {'data': booking}),
+        'GET /bookings/HH-TEST01': (_) => {'data': booking},
+      });
+      final container = await _launch(tester, api: api, signedIn: true);
+
+      await _openRecap(tester, container, checkIn, checkOut);
+      await tester.scrollUntilVisible(find.text('Virement bancaire'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.ensureVisible(find.text('Virement bancaire'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Virement bancaire'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Réserver et payer par virement'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Réservation HH-TEST01'), findsOneWidget);
+      expect(find.textContaining('Une erreur est survenue'), findsNothing);
+    });
+
     testWidgets('des dates prises entre-temps affichent un message clair', (tester) async {
       final api = FakeApi({
         'GET /apartments/villa-lagune/availability': (r) => {'data': availabilityJson(r)},

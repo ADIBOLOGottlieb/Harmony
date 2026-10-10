@@ -19,6 +19,11 @@ class Booking extends Model
         'confirmed_at', 'cancelled_at', 'cancel_reason',
     ];
 
+    /** Valeurs par défaut de la base, connues dès la création (sinon null avant relecture). */
+    protected $attributes = [
+        'amount_paid' => 0,
+    ];
+
     protected function casts(): array
     {
         return [

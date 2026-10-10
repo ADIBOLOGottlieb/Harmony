@@ -42,7 +42,7 @@ class BookingResource extends JsonResource
                 'service_fee' => $this->service_fee,
                 'total' => $this->total_amount,
                 'advance' => $this->advance_amount,
-                'paid' => $this->amount_paid,
+                'paid' => (int) $this->amount_paid,
                 'balance_due' => $this->balanceDue(),
                 'security_deposit' => $this->security_deposit,
                 'currency' => 'XOF',

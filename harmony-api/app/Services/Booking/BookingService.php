@@ -46,6 +46,9 @@ class BookingService
 
                 // Les demandes non payées à temps libèrent leurs dates.
                 $this->expireStale($locked->id);
+                // Une nouvelle demande du même client remplace ses demandes impayées sur les mêmes dates
+                // (ex. paiement abandonné puis relancé) au lieu de se bloquer elle-même.
+                $this->releaseOwnUnpaid($user, $locked, $window);
 
                 if ($this->availability->conflicts($locked, $window->start, $window->blockedUntil())) {
                     throw BookingException::unavailable();
@@ -151,6 +154,29 @@ class BookingService
             ->where('status', BookingStatus::Confirmed)
             ->where('end_at', '<=', now())
             ->update(['status' => BookingStatus::Completed]);
+    }
+
+    private function releaseOwnUnpaid(User $user, Apartment $apartment, StayWindow $window): void
+    {
+        $ids = Booking::query()
+            ->where('user_id', $user->id)
+            ->where('apartment_id', $apartment->id)
+            ->where('status', BookingStatus::Pending)
+            ->where('amount_paid', 0)
+            ->where('start_at', '<', $window->end)
+            ->where('end_at', '>', $window->start)
+            ->pluck('id');
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        Payment::query()->whereIn('booking_id', $ids)->where('status', PaymentStatus::Pending)
+            ->update(['status' => PaymentStatus::Cancelled]);
+        Booking::query()->whereIn('id', $ids)->update([
+            'status' => BookingStatus::Cancelled,
+            'cancelled_at' => now(),
+            'cancel_reason' => 'replaced',
+        ]);
     }
 
     private function assertBookable(Apartment $apartment, StayWindow $window, int $guests): void

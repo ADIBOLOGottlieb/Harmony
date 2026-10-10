@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 typedef Json = Map<String, dynamic>;
 
+/// Montant FCFA : tolère un entier transmis en décimal ou absent (0).
+int _int(Object? value) => (value as num?)?.toInt() ?? 0;
+
 /// Types de séjour (codes de l'API).
 enum StayType {
   night('night', 'Nuitées'),
@@ -228,11 +231,11 @@ class Booking {
       address: apartment['address'] as String?,
       latitude: (apartment['latitude'] as num?)?.toDouble(),
       longitude: (apartment['longitude'] as num?)?.toDouble(),
-      total: amounts['total'] as int,
-      paid: amounts['paid'] as int,
-      balanceDue: amounts['balance_due'] as int,
-      advance: amounts['advance'] as int,
-      securityDeposit: amounts['security_deposit'] as int,
+      total: _int(amounts['total']),
+      paid: _int(amounts['paid']),
+      balanceDue: _int(amounts['balance_due']),
+      advance: _int(amounts['advance']),
+      securityDeposit: _int(amounts['security_deposit']),
       lines: (j['price_breakdown'] as List? ?? const []).map((l) => PriceLine.fromJson(l as Json)).toList(),
       cancellationDeadline: deadline == null ? null : DateTime.parse(deadline),
       payments: (j['payments'] as List? ?? const []).map((p) => BookingPayment.fromJson(p as Json)).toList(),
