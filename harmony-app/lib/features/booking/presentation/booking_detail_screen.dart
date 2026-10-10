@@ -112,6 +112,19 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> with 
     await _act(() => ref.read(bookingApiProvider).payBalance(booking.reference, method));
   }
 
+  Future<void> _review(Booking booking) async {
+    final result = await showHarmonySheet<(int, String)>(
+      context,
+      title: 'Votre avis sur ${booking.apartmentTitle}',
+      builder: (context) => const _ReviewForm(),
+    );
+    if (result == null) return;
+    await _act(
+      () => ref.read(bookingApiProvider).review(booking.reference, result.$1, result.$2),
+      success: 'Merci ! Votre avis sera publié après relecture par la conciergerie.',
+    );
+  }
+
   Future<void> _cancel(Booking booking) async {
     final deadline = booking.cancellationDeadline;
     final free = deadline != null && DateTime.now().toUtc().isBefore(deadline.toUtc());
@@ -170,6 +183,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> with 
               const SizedBox(height: HSpace.md),
               if (b.isPending) _PendingCard(booking: b, onOpen: _open, onCheck: _refresh),
               if (b.isConfirmed) _ConfirmedCard(booking: b, onOpen: _open),
+              if (b.canReview || b.reviewRating != null) _ReviewCard(booking: b, onReview: () => _review(b)),
               const SizedBox(height: HSpace.md),
               _Line(label: 'Séjour', value: b.stayTypeLabel),
               _Line(label: 'Arrivée', value: '${fullDate(b.startAt)} · ${timeOfDay(b.startAt)}'),
@@ -292,6 +306,120 @@ class _ConfirmedCard extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ReviewCard extends StatelessWidget {
+  const _ReviewCard({required this.booking, required this.onReview});
+
+  final Booking booking;
+  final VoidCallback onReview;
+
+  @override
+  Widget build(BuildContext context) {
+    final rating = booking.reviewRating;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(HSpace.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(rating == null ? 'Comment s’est passé votre séjour ?' : 'Merci pour votre avis', style: context.tt.titleMedium),
+            const SizedBox(height: HSpace.xxs),
+            if (rating == null) ...[
+              Text('Votre retour aide la conciergerie à soigner chaque séjour.', style: context.tt.bodyMedium),
+              const SizedBox(height: HSpace.sm),
+              FilledButton.tonal(onPressed: onReview, child: const Text('Donner mon avis')),
+            ] else ...[
+              _Stars(rating: rating),
+              if (booking.reviewComment != null) ...[
+                const SizedBox(height: HSpace.xs),
+                Text(booking.reviewComment!, style: context.tt.bodyMedium),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Stars extends StatelessWidget {
+  const _Stars({required this.rating});
+
+  final int rating;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: '$rating sur 5',
+        excludeSemantics: true,
+        child: Row(
+          children: [
+            for (var i = 1; i <= 5; i++)
+              Icon(i <= rating ? Icons.star_rounded : Icons.star_outline_rounded, color: context.hc.accent, size: HSize.icon),
+          ],
+        ),
+      );
+}
+
+/// Note de 1 à 5 et commentaire facultatif ; renvoie (note, commentaire).
+class _ReviewForm extends StatefulWidget {
+  const _ReviewForm();
+
+  @override
+  State<_ReviewForm> createState() => _ReviewFormState();
+}
+
+class _ReviewFormState extends State<_ReviewForm> {
+  int _rating = 0;
+  final _comment = TextEditingController();
+
+  @override
+  void dispose() {
+    _comment.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(HSpace.gutter, 0, HSpace.gutter, HSpace.lg + MediaQuery.viewInsetsOf(context).bottom),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 1; i <= 5; i++)
+                IconButton(
+                  tooltip: i == 1 ? '1 étoile' : '$i étoiles',
+                  isSelected: i <= _rating,
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _rating = i);
+                  },
+                  icon: Icon(Icons.star_outline_rounded, color: context.hc.textMuted),
+                  selectedIcon: Icon(Icons.star_rounded, color: context.hc.accent),
+                ),
+            ],
+          ),
+          const SizedBox(height: HSpace.sm),
+          TextField(
+            controller: _comment,
+            maxLength: 1000,
+            minLines: 3,
+            maxLines: 6,
+            decoration: const InputDecoration(labelText: 'Commentaire (facultatif)'),
+          ),
+          const SizedBox(height: HSpace.sm),
+          FilledButton(
+            onPressed: _rating == 0 ? null : () => Navigator.of(context).pop((_rating, _comment.text)),
+            child: const Text('Envoyer mon avis'),
+          ),
+        ],
       ),
     );
   }

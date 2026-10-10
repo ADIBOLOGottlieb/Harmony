@@ -82,6 +82,14 @@ class BookingApi {
         return Booking.fromJson(r.data!['data'] as Json);
       });
 
+  Future<Booking> review(String reference, int rating, String? comment) => _call(() async {
+        final r = await _dio.post<Json>('/bookings/$reference/review', data: {
+          'rating': rating,
+          if (comment != null && comment.trim().isNotEmpty) 'comment': comment.trim(),
+        });
+        return Booking.fromJson(r.data!['data'] as Json);
+      });
+
   Future<Booking> payBalance(String reference, PaymentMethod method) => _call(() async {
         final r = await _dio.post<Json>('/bookings/$reference/pay-balance', data: {'payment_method': method.code});
         return Booking.fromJson(r.data!['data'] as Json);

@@ -92,11 +92,19 @@ Map<String, dynamic> bookingJson({
   required DateTime checkOut,
   String status = 'pending',
   String? instructions,
+  bool canReview = false,
+  int? reviewRating,
 }) =>
     {
       'reference': 'HH-TEST01',
       'status': status,
-      'status_label': status == 'pending' ? 'En attente de paiement' : 'Confirmée',
+      'status_label': switch (status) {
+        'pending' => 'En attente de paiement',
+        'completed' => 'Terminée',
+        _ => 'Confirmée',
+      },
+      'can_review': canReview,
+      'review': reviewRating == null ? null : {'rating': reviewRating, 'comment': null},
       'stay_type_label': 'Nuitées',
       'start_at': DateTime.utc(checkIn.year, checkIn.month, checkIn.day, 14).toIso8601String(),
       'end_at': DateTime.utc(checkOut.year, checkOut.month, checkOut.day, 11).toIso8601String(),

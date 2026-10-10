@@ -158,6 +158,9 @@ class Booking {
     required this.lines,
     required this.cancellationDeadline,
     required this.payments,
+    this.canReview = false,
+    this.reviewRating,
+    this.reviewComment,
   });
 
   final String reference;
@@ -188,6 +191,11 @@ class Booking {
   final DateTime? cancellationDeadline;
   final List<BookingPayment> payments;
 
+  /// Séjour terminé et pas encore noté.
+  final bool canReview;
+  final int? reviewRating;
+  final String? reviewComment;
+
   bool get isPending => status == 'pending';
   bool get isConfirmed => status == 'confirmed';
   bool get isCancellable => status == 'pending' || status == 'confirmed';
@@ -203,6 +211,7 @@ class Booking {
     final apartment = j['apartment'] as Json;
     final amounts = j['amounts'] as Json;
     final deadline = j['cancellation_deadline'] as String?;
+    final review = j['review'] as Json?;
     return Booking(
       reference: j['reference'] as String,
       status: j['status'] as String,
@@ -227,6 +236,9 @@ class Booking {
       lines: (j['price_breakdown'] as List? ?? const []).map((l) => PriceLine.fromJson(l as Json)).toList(),
       cancellationDeadline: deadline == null ? null : DateTime.parse(deadline),
       payments: (j['payments'] as List? ?? const []).map((p) => BookingPayment.fromJson(p as Json)).toList(),
+      canReview: j['can_review'] as bool? ?? false,
+      reviewRating: review?['rating'] as int?,
+      reviewComment: review?['comment'] as String?,
     );
   }
 }

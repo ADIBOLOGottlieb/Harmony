@@ -318,5 +318,37 @@ void main() {
       expect(find.text('Ces dates viennent d’être réservées. Choisissez d’autres dates.'), findsOneWidget);
       expect(find.text('Récapitulatif'), findsOneWidget);
     });
+    testWidgets('noter un séjour terminé', (tester) async {
+      var reviewed = false;
+      final api = FakeApi({
+        'GET /bookings/HH-TEST01': (_) => {
+              'data': bookingJson(
+                checkIn: checkIn,
+                checkOut: checkOut,
+                status: 'completed',
+                canReview: !reviewed,
+                reviewRating: reviewed ? 4 : null,
+              ),
+            },
+        'POST /bookings/HH-TEST01/review': (_) {
+          reviewed = true;
+          return {'data': bookingJson(checkIn: checkIn, checkOut: checkOut, status: 'completed', reviewRating: 4)};
+        },
+      });
+      final container = await _launch(tester, api: api, signedIn: true);
+      container.read(appRouterProvider).push('/reservation/HH-TEST01');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Donner mon avis'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('4 étoiles'));
+      await tester.pump();
+      await tester.tap(find.text('Envoyer mon avis'));
+      await tester.pumpAndSettle();
+
+      expect(api.last('POST /bookings/HH-TEST01/review')!.data, {'rating': 4});
+      expect(find.text('Merci pour votre avis'), findsOneWidget);
+      expect(find.text('Donner mon avis'), findsNothing);
+    });
   });
 }
