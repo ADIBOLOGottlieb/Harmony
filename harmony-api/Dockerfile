@@ -12,6 +12,11 @@ ENV PHP_OPCACHE_ENABLE=1 \
 
 WORKDIR /var/www/html
 
+# intl : requise par Filament (espace de gestion), absente de l'image de base.
+USER root
+RUN install-php-extensions intl
+USER www-data
+
 # Dépendances d'abord : la couche reste en cache tant que le lock ne change pas.
 COPY --chown=www-data:www-data composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --no-progress --no-scripts --no-autoloader

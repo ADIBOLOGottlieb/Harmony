@@ -156,20 +156,17 @@ it('ne révèle jamais l’adresse exacte dans le catalogue public', function ()
 });
 
 it('crée le premier administrateur depuis l’environnement sans écraser un compte existant', function () {
-    putenv('HARMONY_ADMIN_EMAIL=direction@harmony.test');
-    putenv('HARMONY_ADMIN_PASSWORD=un-mot-de-passe-long');
+    config(['harmony.admin' => ['email' => 'direction@harmony.test', 'password' => 'un-mot-de-passe-long']]);
 
     $this->artisan('harmony:bootstrap-admin')->assertSuccessful();
     $admin = User::query()->where('email', 'direction@harmony.test')->sole();
     expect($admin->role)->toBe(UserRole::Admin)->and($admin->canAccessPanel(Filament::getPanel('admin')))->toBeTrue();
 
-    putenv('HARMONY_ADMIN_PASSWORD=autre-mot-de-passe-long');
+    config(['harmony.admin.password' => 'autre-mot-de-passe-long']);
     $hash = $admin->password;
     $this->artisan('harmony:bootstrap-admin')->assertSuccessful();
     expect($admin->refresh()->password)->toBe($hash);
 
-    putenv('HARMONY_ADMIN_EMAIL');
-    putenv('HARMONY_ADMIN_PASSWORD');
 });
 
 it('charge le catalogue de démonstration une seule fois', function () {

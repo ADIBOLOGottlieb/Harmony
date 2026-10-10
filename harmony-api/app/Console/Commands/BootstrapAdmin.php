@@ -19,8 +19,8 @@ class BootstrapAdmin extends Command
 {
     public function handle(): int
     {
-        $email = (string) env('HARMONY_ADMIN_EMAIL', '');
-        $password = (string) env('HARMONY_ADMIN_PASSWORD', '');
+        $email = (string) config('harmony.admin.email');
+        $password = (string) config('harmony.admin.password');
 
         if ($email === '' || $password === '') {
             return self::SUCCESS;
